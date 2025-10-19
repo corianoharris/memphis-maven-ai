@@ -42,9 +42,24 @@ body {
     opacity: 0;
     transform: translateX(-30px);
   }
+  60% {
+    opacity: 0.7;
+    transform: translateX(-10px);
+  }
   100% {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes fade-in-slow {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -67,11 +82,15 @@ body {
 }
 
 .animate-slide-in-from-right {
-  animation: slide-in-from-right 0.4s ease-out forwards;
+  animation: slide-in-from-right 0.8s ease-out forwards;
 }
 
 .animate-slide-in-from-left {
-  animation: slide-in-from-left 0.4s ease-out forwards;
+  animation: slide-in-from-left 1.2s ease-out forwards;
+}
+
+.animate-fade-in-slow {
+  animation: fade-in-slow 1.2s ease-out forwards;
 }
 
 .animate-fade-in-content {

@@ -644,7 +644,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
       {/* Chatbox Container */}
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
         {!showChat ? (
           /* Initial Greeting Screen */
           <div className="bg-transparent overflow-hidden">
@@ -681,20 +681,20 @@ export default function Home() {
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       <span>{tFallback('ui.onlineStatus')}</span>
                     </div>
-                    <button 
-                      onClick={() => setShowNotifications(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                </div>
+                <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 md:gap-4">
                   <a 
                     href={`tel:${quickAccessData?.services?.['211']?.phone || '211'}`}
-                    className={`px-3 py-2 rounded-lg text-center text-xs font-medium transition-colors shadow-md ${
+                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
                       quickAccessData?.services?.['211']?.status === 'busy' 
                         ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
                         : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
@@ -957,10 +957,11 @@ export default function Home() {
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} ${
                         index === messages.length - 1 
                           ? message.role === 'user' 
-                            ? 'animate-slide-in-from-right' 
-                            : 'animate-slide-in-from-left'
+                            ? 'animate-slide-in-from-right animate-fade-in-slow' 
+                            : 'animate-slide-in-from-left animate-fade-in-slow'
                           : ''
                       }`}
+                      style={index === messages.length - 1 && message.role === 'assistant' ? { animationDelay: '0.5s' } : {}}
                     >
                       {message.role === 'assistant' && (
                         <div className="w-8 h-8 mr-2 flex-shrink-0">
@@ -976,7 +977,7 @@ export default function Home() {
                         </div>
                       )}
                       <div
-                        className={`max-w-xs px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
+                        className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
                           message.role === 'user'
                             ? 'bg-purple-200 text-purple-800 rounded-br-md hover:bg-purple-200'
                             : 'bg-blue-100 text-blue-800 rounded-bl-md border border-gray-200 hover:border-gray-300'
@@ -1265,7 +1266,7 @@ export default function Home() {
                     </div>
                   ))}
                   {isLoading && (
-                    <div className="flex justify-start animate-slide-in-from-left">
+                    <div className="flex justify-start animate-slide-in-from-left animate-fade-in-slow">
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <img 
                           src="/Beale_blue.png" 
@@ -1277,7 +1278,7 @@ export default function Home() {
                           }}
                         />
                       </div>
-                      <div className="bg-white text-gray-900 max-w-xs px-4 py-3 rounded-2xl rounded-bl-md border border-gray-200 animate-pulse-glow">
+                      <div className="bg-white text-gray-900 max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl rounded-bl-md border border-gray-200 animate-pulse-glow">
                         <div className="flex items-center space-x-3">
                           <div className="flex space-x-1">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
