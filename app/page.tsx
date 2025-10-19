@@ -747,7 +747,7 @@ export default function Home() {
                     onMouseEnter={() => console.log('Hovering over avatar')}
                   >
                     <img 
-                      src="/beale_blue.png" 
+                      src="/Beale_blue.png" 
                       alt="Beale Avatar" 
                       className="w-full h-full object-cover rounded-full"
                       onError={(e) => {
@@ -965,7 +965,7 @@ export default function Home() {
                       {message.role === 'assistant' && (
                         <div className="w-8 h-8 mr-2 flex-shrink-0">
                           <img 
-                            src="/beale_blue.png" 
+                            src="/Beale_blue.png" 
                             alt="Beale Avatar" 
                             className="w-full h-full object-cover rounded-full"
                             onError={(e) => {
@@ -1268,7 +1268,7 @@ export default function Home() {
                     <div className="flex justify-start animate-slide-in-from-left">
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <img 
-                          src="/beale_blue.png" 
+                          src="/Beale_blue.png" 
                           alt="Beale Avatar" 
                           className="w-full h-full object-cover rounded-full"
                           onError={(e) => {
