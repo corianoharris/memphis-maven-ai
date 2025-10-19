@@ -710,7 +710,7 @@ export default function Home() {
                   </a>
                   <a 
                     href={`tel:${quickAccessData?.services?.['311']?.phone || '901-636-6500'}`}
-                    className={`px-3 py-2 rounded-lg text-center text-xs font-medium transition-colors shadow-md ${
+                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
                       quickAccessData?.services?.['311']?.status === 'busy' 
                         ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
                         : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
@@ -726,7 +726,7 @@ export default function Home() {
                   </a>
                   <a 
                     href={`tel:${quickAccessData?.services?.['911']?.phone || '911'}`}
-                    className={`px-3 py-2 rounded-lg text-center text-xs font-medium transition-colors shadow-md ${
+                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
                       quickAccessData?.services?.['911']?.status === 'busy' 
                         ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
                         : 'bg-red-100 hover:bg-red-200 text-red-800'
