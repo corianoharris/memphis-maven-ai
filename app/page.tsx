@@ -669,20 +669,27 @@ export default function Home() {
           </div>
         ) : (
           /* Chat Interface */
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300">
+          <div className="bg-white bg-opacity-95 rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300">
             {/* Notification Center */}
             {showNotifications && (
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 px-4 py-3">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{tFallback('ui.quickAccess')}</h3>
-                  <button 
-                    onClick={() => setShowNotifications(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {/* Online Status Pill */}
+                    <div className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>{tFallback('ui.onlineStatus')}</span>
+                    </div>
+                    <button 
+                      onClick={() => setShowNotifications(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <a 
@@ -738,11 +745,11 @@ export default function Home() {
             )}
 
             {/* Header */}
-            <div className=" px-6 py-4">
+            <div className="px-6 py-2 bg-white bg-opacity-95 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div 
-                    className="w-32 h-32 bg-transparent bg-opacity-20 rounded-full flex items-center justify-center overflow-visible cursor-help relative group"
+                    className="w-12 h-12 bg-transparent bg-opacity-20 rounded-full flex items-center justify-center overflow-visible cursor-help relative group"
                     title="Beale - Help and harmony straight from Beale"
                     onMouseEnter={() => console.log('Hovering over avatar')}
                   >
@@ -916,13 +923,6 @@ export default function Home() {
           </div>
         </div>
             
-            {/* Online Status */}
-            <div className="bg-white px-6 py-2 border-b border-gray-100">
-              <div className="flex items-center  justify-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full "></div>
-                <span className="text-gray-700 text-sm font-medium tracking-wide">{tFallback('ui.onlineStatus')}</span>
-              </div>
-            </div>
 
             {/* Messages Area */}
             <div className="h-96 overflow-y-auto p-6 bg-gray-50">
@@ -1295,7 +1295,7 @@ export default function Home() {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-gray-200 p-4 bg-white shadow-sm">
+            <div className="border-t border-gray-200 p-4 bg-white bg-opacity-95 shadow-sm">
               <div className="flex space-x-3">
                 <div className="flex-1 relative">
                   <input
