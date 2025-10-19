@@ -67,7 +67,7 @@ export async function POST(request) {
       const formData = await request.formData();
       const from = formData.get('From');
       if (from) {
-        await sendSMS(from, "Sorry, I'm having trouble right now. Please call 211 for community services or 311 at (901)636-6500 for immediate assistance.");
+        await sendMemphisResponse(from, "", "Sorry, I'm having trouble right now. Please call 211 for community services or 311 at (901)636-6500 for immediate assistance.", []);
       }
     } catch (smsError) {
       console.error('Error sending error SMS:', smsError);
