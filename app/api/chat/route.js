@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, initializeDatabase } from '../../../lib/db.js';
-import { processQuestion, getEmbedding } from '../../../lib/ai.js';
+import { processQuestion, getEmbedding, safeProcessQuestion } from '../../../lib/ai.js';
 
 /**
  * POST /api/chat
@@ -10,18 +10,25 @@ export async function POST(request) {
   try {
     // Set timeout for the entire request
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timeout')), 30000)
+      setTimeout(() => reject(new Error('Request timeout')), 60000)
     );
     
     const processRequest = async () => {
       // Initialize database if needed
       await initializeDatabase();
     
-      const { userId, question, conversationId } = await request.json();
+      const { userId, question, conversationId, language } = await request.json();
       
-      if (!userId || !question) {
+      if (!userId) {
         return NextResponse.json(
-          { error: 'Missing required fields: userId, question' },
+          { error: 'Missing required field: userId' },
+          { status: 400 }
+        );
+      }
+      
+      if (!question || question.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'Question cannot be empty' },
           { status: 400 }
         );
       }
@@ -39,7 +46,14 @@ export async function POST(request) {
       const similarPages = await db.searchSimilarPages(questionEmbedding, 5);
       
       // Process the question with AI and multilingual support
-      const response = await processQuestion(question, similarPages);
+      const response = await safeProcessQuestion(question, similarPages, language);
+      
+      console.log('Process question response:', response);
+      
+      // Validate response
+      if (!response || !response.answer) {
+        throw new Error('Invalid response from processQuestion');
+      }
       
       // Store user message
       await db.addMessage(convId, 'user', question);
@@ -57,9 +71,9 @@ export async function POST(request) {
       return NextResponse.json({
         answer: response.answer,
         conversationId: convId,
-        language: response.originalLanguage,
-        languageCode: response.languageCode,
-        confidence: response.confidence,
+        language: response.originalLanguage || 'English',
+        languageCode: response.languageCode || 'en',
+        confidence: response.confidence || 0,
         relevantPages: relevantPages,
         timestamp: new Date().toISOString()
       });

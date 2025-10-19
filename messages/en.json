@@ -1,0 +1,33 @@
+{
+  "ui": {
+    "title": "Beale",
+    "subtitle": "Help and harmony — straight from Beale",
+    "welcome": "Welcome to Beale!",
+    "welcomeMessage": "I'm here to help y'all with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
+    "welcomeGreeting": "Hey! I'm Beale, straight from Beale Street",
+    "welcomeDescription": "I'm here to help out with whatever Memphis city services you need - whether it's reporting potholes, getting permits, or just figuring out how to get stuff done around here.",
+    "welcomeLanguages": "I speak English, Spanish, and Arabic - so whatever language you prefer, we're good to go!",
+    "bealeThinking": "Beale is cooking up an answer...",
+    "enterMessage": "Enter your message...",
+    "sendMessage": "Send message",
+    "exampleQuestions": "Example Questions:",
+    "examplePotholeSlider": "How do I report a pothole?",
+    "exampleTrashSlider": "When is my garbage pickup?",
+    "examplePermitSlider": "How do I get a parking permit?",
+    "online": "We're online!",
+    "quickAccess": "Quick Access",
+    "communityServices": "Community Services",
+    "cityServices": "City Services",
+    "emergency": "Emergency",
+    "immediate": "Immediate",
+    "min": "min",
+    "varies": "Varies",
+    "callForWaitTime": "Call for current wait time",
+    "poweredBy": "POWERED BY",
+    "relevantResources": "Relevant Resources",
+    "relevance": "Relevance",
+    "clickToClose": "Click to close this menu",
+    "multilingualHelp": "Get help in English, Spanish, or Arabic"
+  },
+  "greeting": "Hey Memphis! I'm Beale, straight from Beale Street. I'm here to help you with city services, reporting issues, and answering questions in English, Spanish, or Arabic. Let's keep Memphis smooth and handle things together!"
+}

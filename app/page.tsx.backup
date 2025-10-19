@@ -42,6 +42,7 @@ interface ChatResponse {
 }
 
 export default function Home() {
+  const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -76,49 +77,176 @@ export default function Home() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize i18n hook after all state hooks
-  const { t, i18n } = useTranslation();
-  
-  // Fallback function for when i18n is not ready
-  const tFallback = (key: string) => {
-    if (i18n.isInitialized && t) {
-      return t(key);
-    }
-    // Return the key as fallback
-    return key;
-  };
-
   // Language change handler
-  const changeLanguage = (lang: 'en' | 'es' | 'ar') => {
+  const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     setSelectedLanguage(lang);
     setInput(''); // Clear input when language changes
   };
-
+    const translations = {
+      en: {
+        'ui.title': 'Chat with Beale',
+        'ui.subtitle': '• Help and harmony — straight from Beale',
+        'ui.onlineStatus': "We're online!",
+        'ui.howCanIHelp': 'How can I help?',
+        'ui.selectLanguage': 'Select Language',
+        'ui.quickAccess': 'Quick Access',
+        'ui.communityServices': 'Community Services',
+        'ui.cityServices': 'City Services',
+        'ui.emergency': 'Emergency',
+        'ui.waitTime': 'Wait:',
+        'ui.immediate': 'Immediate',
+        'ui.min': 'min',
+        'ui.varies': 'Varies',
+        'ui.callForWaitTime': 'Call for current wait time',
+        'ui.poweredBy': 'POWERED BY',
+        'ui.welcome': 'Welcome to Beale!',
+        'ui.welcomeMessage': "I'm here to help y'all with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
+        'ui.welcomeGreeting': "Hey! I'm Beale, straight from Beale Street",
+        'ui.welcomeDescription': "I'm here to help out with whatever Memphis city services you need - whether it's reporting potholes, getting permits, or just figuring out how to get stuff done around here.",
+        'ui.welcomeLanguages': "I speak English, Spanish, and Arabic - so whatever language you prefer, we're good to go!",
+        'ui.bealeThinking': "Beale is cooking up an answer...",
+        'ui.relevantResources': "Relevant Resources",
+        'ui.relevance': "Relevance",
+        'ui.socialMediaCenter': "Social Media Center",
+        'ui.call311': "Call 311",
+        'ui.loansAndGrants': "Loans and Grants",
+        'ui.housingCommunityDev': "Housing and Community Development",
+        'ui.government': "Government",
+        'ui.enterMessage': 'Enter your message...',
+        'ui.sendMessage': 'Send message',
+        'ui.exampleQuestions': 'Example Questions:',
+        'ui.examplePotholeSlider': 'How do I report a pothole?',
+        'ui.exampleTrashSlider': 'When is my garbage pickup?',
+        'ui.exampleTrashSpanish': '¿Cuándo es mi recolección de basura?',
+        'ui.exampleTrashArabic': 'متى يكون يوم جمع القمامة الخاص بي؟',
+        'ui.examplePermitSlider': 'How do I get a parking permit?',
+        'ui.examplePermitSpanish': '¿Cómo obtengo un permiso de estacionamiento?',
+        'ui.examplePermitArabic': 'كيف أحصل على تصريح وقوف؟',
+        'ui.howToUse': 'How to Use',
+        'ui.howToUseMemphis': 'Beale',
+        'ui.voiceInputAvailable': 'Voice input available',
+        'ui.clickToClose': 'Click to close this menu',
+        'ui.multilingualHelp': 'Get help in English, Spanish, or Arabic',
+        'greeting': "Hey y'all! I'm Beale, straight from the heart of Memphis. I'm here to help y'all with city services, report issues, and answer questions in English, Spanish, or Arabic. Let's keep Memphis smooth and take care of business together!"
+      },
+      es: {
+        'ui.title': 'Chatea con Beale',
+        'ui.subtitle': '• Ayuda y armonía — directo desde Beale',
+        'ui.onlineStatus': '¡Estamos en línea!',
+        'ui.howCanIHelp': '¿Cómo puedo ayudar?',
+        'ui.selectLanguage': 'Seleccionar Idioma',
+        'ui.quickAccess': 'Acceso Rápido',
+        'ui.communityServices': 'Servicios Comunitarios',
+        'ui.cityServices': 'Servicios de la Ciudad',
+        'ui.emergency': 'Emergencia',
+        'ui.waitTime': 'Espera:',
+        'ui.immediate': 'Inmediato',
+        'ui.min': 'min',
+        'ui.varies': 'Varía',
+        'ui.callForWaitTime': 'Llama para tiempo de espera actual',
+        'ui.poweredBy': 'IMPULSADO POR',
+        'ui.welcome': '¡Bienvenido a Beale!',
+        'ui.welcomeMessage': 'Estoy aquí para ayudarles con los servicios de la ciudad de Memphis, reportar problemas y responder preguntas en inglés, español o árabe.',
+        'ui.welcomeGreeting': '¡Hola! Soy Beale, directo de Beale Street',
+        'ui.welcomeDescription': 'Estoy aquí para ayudarte con cualquier servicio de la ciudad de Memphis que necesites - ya sea reportar baches, obtener permisos, o simplemente averiguar cómo hacer las cosas aquí.',
+        'ui.welcomeLanguages': '¡Hablo inglés, español y árabe - así que en el idioma que prefieras, estamos listos!',
+        'ui.bealeThinking': 'Beale está preparando una respuesta...',
+        'ui.relevantResources': 'Recursos Relevantes',
+        'ui.relevance': 'Relevancia',
+      'ui.socialMediaCenter': 'Centro de Redes Sociales',
+      'ui.call311': 'Llamar al 311',
+      'ui.loansAndGrants': 'Préstamos y Subvenciones',
+      'ui.housingCommunityDev': 'Vivienda y Desarrollo Comunitario',
+      'ui.government': 'Gobierno',
+      'ui.officeCommunityAffairs': 'Oficina de Asuntos Comunitarios',
+      'ui.communityAffairs': 'Asuntos Comunitarios',
+      'ui.call511': 'Llamar al 511',
+      'ui.transportation': 'Transporte',
+      'ui.publicWorks': 'Obras Públicas',
+      'ui.healthDepartment': 'Departamento de Salud',
+      'ui.emergencyServices': 'Servicios de Emergencia',
+        'ui.enterMessage': 'Ingresa tu mensaje...',
+        'ui.sendMessage': 'Enviar mensaje',
+        'ui.exampleQuestions': 'Preguntas de Ejemplo:',
+        'ui.examplePotholeSlider': '¿Cómo reporto un bache?',
+        'ui.exampleTrashSlider': '¿Cuándo es mi recolección de basura?',
+        'ui.exampleTrashSpanish': '¿Cuándo es mi recolección de basura?',
+        'ui.exampleTrashArabic': 'متى يكون يوم جمع القمامة الخاص بي؟',
+        'ui.examplePermitSlider': '¿Cómo obtengo un permiso de estacionamiento?',
+        'ui.examplePermitSpanish': '¿Cómo obtengo un permiso de estacionamiento?',
+        'ui.examplePermitArabic': 'كيف أحصل على تصريح وقوف؟',
+        'ui.howToUse': 'Cómo Usar',
+        'ui.howToUseMemphis': 'Beale',
+        'ui.voiceInputAvailable': 'Entrada de voz disponible',
+        'ui.clickToClose': 'Haz clic para cerrar este menú',
+        'ui.multilingualHelp': 'Obtén ayuda en inglés, español o árabe',
+        'greeting': "¡Hola Memphis! Soy Beale, directo desde el corazón de Memphis. Estoy aquí para ayudarles con servicios de la ciudad, reportar problemas y responder preguntas en inglés, español o árabe. ¡Mantengamos Memphis fluido y arreglemos todo juntos!"
+      },
+      ar: {
+        'ui.title': 'تحدث مع Beale',
+        'ui.subtitle': '• المساعدة والانسجام — مباشرة من Beale',
+        'ui.onlineStatus': 'نحن متصلون!',
+        'ui.howCanIHelp': 'كيف يمكنني المساعدة؟',
+        'ui.selectLanguage': 'اختيار اللغة',
+        'ui.quickAccess': 'الوصول السريع',
+        'ui.communityServices': 'الخدمات المجتمعية',
+        'ui.cityServices': 'خدمات المدينة',
+        'ui.emergency': 'طوارئ',
+        'ui.waitTime': 'الانتظار:',
+        'ui.immediate': 'فوري',
+        'ui.min': 'دقيقة',
+        'ui.varies': 'يختلف',
+        'ui.callForWaitTime': 'اتصل لمعرفة وقت الانتظار الحالي',
+        'ui.poweredBy': 'مدعوم بواسطة',
+        'ui.welcome': 'مرحباً بك في Beale!',
+        'ui.welcomeMessage': 'أنا هنا لمساعدتك في خدمات مدينة ممفيس، الإبلاغ عن المشاكل والإجابة على الأسئلة باللغة الإنجليزية أو الإسبانية أو العربية.',
+        'ui.welcomeGreeting': 'مرحباً! أنا Beale، مباشرة من شارع Beale',
+        'ui.welcomeDescription': 'أنا هنا لمساعدتك في أي خدمات مدينة ممفيس تحتاجها - سواء كان الإبلاغ عن الحفر، الحصول على تصاريح، أو مجرد معرفة كيفية إنجاز الأمور هنا.',
+        'ui.welcomeLanguages': 'أتحدث الإنجليزية والإسبانية والعربية - لذا بأي لغة تفضلها، نحن مستعدون!',
+        'ui.bealeThinking': 'Beale يحضر إجابة...',
+        'ui.relevantResources': 'الموارد ذات الصلة',
+        'ui.relevance': 'الصلة',
+      'ui.socialMediaCenter': 'مركز وسائل التواصل الاجتماعي',
+      'ui.call311': 'اتصل بـ 311',
+      'ui.loansAndGrants': 'القروض والمنح',
+      'ui.housingCommunityDev': 'الإسكان والتنمية المجتمعية',
+      'ui.government': 'الحكومة',
+      'ui.officeCommunityAffairs': 'مكتب الشؤون المجتمعية',
+      'ui.communityAffairs': 'الشؤون المجتمعية',
+      'ui.call511': 'اتصل بـ 511',
+      'ui.transportation': 'النقل',
+      'ui.publicWorks': 'الأشغال العامة',
+      'ui.healthDepartment': 'إدارة الصحة',
+      'ui.emergencyServices': 'خدمات الطوارئ',
+        'ui.enterMessage': 'أدخل رسالتك...',
+        'ui.sendMessage': 'إرسال الرسالة',
+        'ui.exampleQuestions': 'أسئلة مثال:',
+        'ui.examplePotholeSlider': 'كيف أبلغ عن حفرة في الطريق؟',
+        'ui.exampleTrashSlider': 'متى يكون يوم جمع القمامة الخاص بي؟',
+        'ui.exampleTrashSpanish': '¿Cuándo es mi recolección de basura?',
+        'ui.exampleTrashArabic': 'متى يكون يوم جمع القمامة الخاص بي؟',
+        'ui.examplePermitSlider': 'كيف أحصل على تصريح وقوف؟',
+        'ui.examplePermitSpanish': '¿Cómo obtengo un permiso de estacionamiento?',
+        'ui.examplePermitArabic': 'كيف أحصل على تصريح وقوف؟',
+        'ui.howToUse': 'كيفية الاستخدام',
+        'ui.howToUseMemphis': 'Beale',
+        'ui.voiceInputAvailable': 'إدخال الصوت متاح',
+        'ui.clickToClose': 'انقر لإغلاق هذه القائمة',
+        'ui.multilingualHelp': 'احصل على مساعدة باللغة الإنجليزية أو الإسبانية أو العربية',
+        'greeting': 'مرحباً ممفيس! أنا Beale، مباشرة من قلب ممفيس. أنا هنا لمساعدتك في خدمات المدينة، الإبلاغ عن المشاكل والإجابة على الأسئلة باللغة الإنجليزية أو الإسبانية أو العربية. دعنا نحافظ على ممفيس سلسة ونعالج الأمور معاً!'
+      }
 
   // Function to translate resource titles with automatic key generation
   const translateResourceTitle = (title: string) => {
-    // Try different key patterns to find a match
-    const patterns = [
-      // Pattern with triple underscores for " - " 
-      title.replace(/\s*-\s*/g, '___'),
-      // Pattern with single underscores
-      title.replace(/[^a-zA-Z0-9]/g, '_'),
-      // Pattern with double underscores for spaces
-      title.replace(/\s+/g, '__')
-    ];
+    // Create a key from the title by removing special characters and spaces
+    const key = title.replace(/[^a-zA-Z0-9]/g, '_');
     
-    // Try each pattern to find a translation
-    for (const pattern of patterns) {
-      const key = `resources.${pattern}`;
-      const translatedTitle = tFallback(key);
-      if (translatedTitle !== key) {
-        return translatedTitle;
-      }
-    }
+    // Try to get translation with fallback to original title
+    const translatedTitle = t(`resources.${key}`, { defaultValue: title });
     
-    // If no translation found, return the original title
-    return title;
+    // If the translation key doesn't exist, return the original title
+    return translatedTitle !== `resources.${key}` ? translatedTitle : title;
   };
 
   const scrollToBottom = () => {
@@ -674,7 +802,7 @@ export default function Home() {
             {showNotifications && (
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 px-4 py-3">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{tFallback('ui.quickAccess')}</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{t('ui.quickAccess')}</h3>
                   <button 
                     onClick={() => setShowNotifications(false)}
                     className="text-gray-500 hover:text-gray-700"
@@ -694,11 +822,11 @@ export default function Home() {
                     }`}
                   >
                     <div className="font-bold tracking-wide">211</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.communityServices')}</div>
+                    <div className="text-xs opacity-75 tracking-wide">{t('ui.communityServices')}</div>
                     <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
+                      {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? t('ui.callForWaitTime') : 
+                       quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? t('ui.immediate') :
+                       quickAccessData?.services?.['211']?.waitTime || t('ui.callForWaitTime')}
                     </div>
                   </a>
                   <a 
@@ -710,11 +838,11 @@ export default function Home() {
                     }`}
                   >
                     <div className="font-bold tracking-wide">311</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.cityServices')}</div>
+                    <div className="text-xs opacity-75 tracking-wide">{t('ui.cityServices')}</div>
                     <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
+                      {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? t('ui.callForWaitTime') : 
+                       quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? t('ui.immediate') :
+                       quickAccessData?.services?.['311']?.waitTime || t('ui.callForWaitTime')}
                     </div>
                   </a>
                   <a 
@@ -726,11 +854,11 @@ export default function Home() {
                     }`}
                   >
                     <div className="font-bold tracking-wide">911</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.emergency')}</div>
+                    <div className="text-xs opacity-75 tracking-wide">{t('ui.emergency')}</div>
                     <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
+                      {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? t('ui.callForWaitTime') : 
+                       quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? t('ui.immediate') :
+                       quickAccessData?.services?.['911']?.waitTime || t('ui.immediate')}
                     </div>
                   </a>
                 </div>
@@ -811,7 +939,7 @@ export default function Home() {
                     
                     {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                      {tFallback('ui.selectLanguage')}
+                      {t('ui.selectLanguage')}
                   </div>
                     
                     {/* Language Dropdown */}
@@ -879,33 +1007,33 @@ export default function Home() {
                     {showDropdown && (
                       <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
                         <div className="p-4">
-                          <div className="font-bold text-lg mb-2 text-blue-600">{tFallback('ui.howToUse')}</div>
-                          <div className="font-semibold text-base mb-3 text-gray-800">{tFallback('ui.howToUseMemphis')}</div>
+                          <div className="font-bold text-lg mb-2 text-blue-600">{t('ui.howToUse')}</div>
+                          <div className="font-semibold text-base mb-3 text-gray-800">{t('ui.howToUseMemphis')}</div>
                           <div className="text-sm space-y-2">
                             <div className="flex items-center">
                               <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                              <span className="font-medium text-gray-800">211 {tFallback('ui.communityServices')}</span>
+                              <span className="font-medium text-gray-800">211 {t('ui.communityServices')}</span>
                       </div>
                             <div className="flex items-center">
                               <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">311 {tFallback('ui.cityServices')}</span>
+                              <span className="text-gray-800">311 {t('ui.cityServices')}</span>
                             </div>
                             <div className="flex items-center">
                               <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">911 {tFallback('ui.emergency')} Services</span>
+                              <span className="text-gray-800">911 {t('ui.emergency')} Services</span>
                             </div>
                             <div className="flex items-center">
                               <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">{tFallback('ui.multilingualHelp')}</span>
+                              <span className="text-gray-800">{t('ui.multilingualHelp')}</span>
                             </div>
                             <div className="flex items-center">
                               <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">{tFallback('ui.voiceInputAvailable')}</span>
+                              <span className="text-gray-800">{t('ui.voiceInputAvailable')}</span>
                             </div>
                           </div>
                           <div className="mt-3 pt-3 border-t border-gray-200">
                             <div className="text-xs text-gray-600 text-center">
-{tFallback('ui.clickToClose')}
+{t('ui.clickToClose')}
                             </div>
                           </div>
                         </div>
@@ -920,32 +1048,35 @@ export default function Home() {
             <div className="bg-white px-6 py-2 border-b border-gray-100">
               <div className="flex items-center  justify-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full "></div>
-                <span className="text-gray-700 text-sm font-medium tracking-wide">{tFallback('ui.onlineStatus')}</span>
+                <span className="text-gray-700 text-sm font-medium tracking-wide">{t('ui.onlineStatus')}</span>
               </div>
             </div>
 
             {/* Messages Area */}
             <div className="h-96 overflow-y-auto p-6 bg-gray-50">
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-start pt-8 h-full text-center">
+                <div className="flex flex-col items-center justify-center h-full text-center">
                  
                 
-                  <div className="text-gray-600 mb-2 max-w-sm text-sm space-y-2">
+                  <div className="text-gray-600 mb-6 max-w-sm text-sm space-y-3">
                     <p className="font-medium text-gray-800">
-                      {tFallback('ui.welcomeGreeting')}
+                      {t('ui.welcomeGreeting')}
                     </p>
                     <p>
-                      {tFallback('ui.welcomeDescription')}
+                      {t('ui.welcomeDescription')}
+                    </p>
+                    <p className="text-green-600 font-medium">
+                      {t('ui.welcomeLanguages')}
                     </p>
                   </div>
                   
                   {/* Quick Action Buttons */}
-                  <div className="w-full max-w-sm space-y-2">
+                  <div className="w-full max-w-sm space-y-3">
                         <button
-                      onClick={() => setInput(tFallback('ui.examplePotholeSlider'))}
+                      onClick={() => setInput(t('ui.examplePotholeSlider'))}
                       className="w-full text-left p-3 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors text-sm text-gray-700 hover:shadow-sm"
                         >
-                      {tFallback('ui.examplePotholeSlider')}
+                      {t('ui.examplePotholeSlider')}
                         </button>
                   </div>
                 </div>
@@ -962,19 +1093,6 @@ export default function Home() {
                           : ''
                       }`}
                     >
-                      {message.role === 'assistant' && (
-                        <div className="w-8 h-8 mr-2 flex-shrink-0">
-                          <img 
-                            src="/beale_blue.png" 
-                            alt="Beale Avatar" 
-                            className="w-full h-full object-cover rounded-full"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
                       <div
                         className={`max-w-xs px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
                           message.role === 'user'
@@ -1205,7 +1323,7 @@ export default function Home() {
                             {/* Divider line */}
                             <div className="border-t border-gray-200 my-3"></div>
                             <div className="text-xs font-medium text-gray-600 mb-2 tracking-wide">
-                              {tFallback('ui.relevantResources')} ({message.relevantPages.length}):
+                              {t('ui.relevantResources')} ({message.relevantPages.length}):
                             </div>
                             {(expandedResources[message.id] ? message.relevantPages : message.relevantPages.slice(0, 5)).map((page, index) => (
                               <div key={index} className="bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-sm">
@@ -1222,7 +1340,7 @@ export default function Home() {
                                     {page.url}
                                   </div>
                                   <div className="text-xs text-gray-400 mt-1 flex items-center space-x-1 tracking-wide">
-                                    <span>{tFallback('ui.relevance')}:</span>
+                                    <span>{t('ui.relevance')}:</span>
                                     <span className={`font-medium ${
                                       page.similarity > 0.7 ? 'text-green-600' : 
                                       page.similarity > 0.5 ? 'text-yellow-600' : 'text-gray-500'
@@ -1266,17 +1384,6 @@ export default function Home() {
                   ))}
                   {isLoading && (
                     <div className="flex justify-start animate-slide-in-from-left">
-                      <div className="w-8 h-8 mr-2 flex-shrink-0">
-                        <img 
-                          src="/beale_blue.png" 
-                          alt="Beale Avatar" 
-                          className="w-full h-full object-cover rounded-full"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                      </div>
                       <div className="bg-white text-gray-900 max-w-xs px-4 py-3 rounded-2xl rounded-bl-md border border-gray-200 animate-pulse-glow">
                         <div className="flex items-center space-x-3">
                           <div className="flex space-x-1">
@@ -1284,7 +1391,7 @@ export default function Home() {
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
-                          <span className="text-sm font-medium">{tFallback('ui.bealeThinking')}</span>
+                          <span className="text-sm font-medium">{t('ui.bealeThinking')}</span>
                         </div>
                       </div>
                     </div>
@@ -1303,7 +1410,7 @@ export default function Home() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder={tFallback('ui.enterMessage')}
+                    placeholder={t('ui.enterMessage')}
                     className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
                     disabled={isLoading}
                   />
@@ -1328,7 +1435,7 @@ export default function Home() {
                             ? 'bg-red-100 text-red-600 hover:bg-red-200'
                             : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                         } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title={isLoading ? tFallback('ui.bealeThinking') : (isListening ? 'Stop listening' : 'Start voice input')}
+                        title={isLoading ? t('ui.bealeThinking') : (isListening ? 'Stop listening' : 'Start voice input')}
                       >
                         {isListening ? (
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -1346,7 +1453,7 @@ export default function Home() {
                       onClick={toggleEmojiPicker}
                       disabled={isLoading && !isListening}
                       className={`text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors ${(isLoading && !isListening) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={(isLoading && !isListening) ? tFallback('ui.bealeThinking') : 'Add emoji'}
+                      title={(isLoading && !isListening) ? t('ui.bealeThinking') : 'Add emoji'}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <circle cx="12" cy="12" r="10"/>
@@ -1360,7 +1467,7 @@ export default function Home() {
                       onClick={triggerFileInput}
                       disabled={isLoading && !isListening}
                       className={`text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors ${(isLoading && !isListening) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={(isLoading && !isListening) ? tFallback('ui.bealeThinking') : 'Click to upload images, PDFs, or documents (max 10MB). Images will be automatically analyzed by Beale.'}
+                      title={(isLoading && !isListening) ? t('ui.bealeThinking') : 'Click to upload images, PDFs, or documents (max 10MB). Images will be automatically analyzed by Beale.'}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.64 16.2a2 2 0 01-2.83-2.83l8.49-8.49"/>
@@ -1391,7 +1498,7 @@ export default function Home() {
               
               {/* Emoji Picker */}
               {showEmojiPicker && (
-                <div className="emoji-picker absolute bottom-20 right-20 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
+                <div className="emoji-picker absolute bottom-20 left-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
                   <div className="grid grid-cols-8 gap-2">
                     {['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏'].map((emoji) => (
                       <button
@@ -1473,7 +1580,7 @@ export default function Home() {
           {/* Footer */}
             <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
               <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
-                <span>{tFallback('ui.poweredBy')}</span>
+                <span>{t('ui.poweredBy')}</span>
                 <div className="flex items-center space-x-1">
                   <span className="font-semibold text-blue-600">Coriano Harris</span>
               </div>

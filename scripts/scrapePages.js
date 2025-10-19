@@ -20,19 +20,62 @@ const TARGET_URLS = [
   'https://memphistn.gov/call-311/'
 ];
 
-// Additional Memphis 211/311 related URLs to scrape
-const ADDITIONAL_URLS = [
+// Base URLs for Memphis services - the scraper will discover additional URLs automatically
+const BASE_URLS = [
   'https://memphistn.gov/government/',
   'https://memphistn.gov/residents/',
-  'https://memphistn.gov/business/',
-  'https://memphistn.gov/updates/',
-  'https://memphistn.gov/government/solid-waste/',
-  'https://memphistn.gov/government/public-works/',
-  'https://memphistn.gov/government/parks/',
-  'https://memphistn.gov/government/animal-services/',
-  'https://memphistn.gov/government/fire/',
-  'https://memphistn.gov/government/police/'
+  'https://memphistn.gov/business/'
 ];
+
+// Function to discover additional URLs from a page
+async function discoverUrls(baseUrl, maxDepth = 2, currentDepth = 0) {
+  if (currentDepth >= maxDepth) return [];
+  
+  try {
+    const response = await axios.get(baseUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Memphis-211-311-Bot/1.0)'
+      }
+    });
+    
+    const $ = cheerio.load(response.data);
+    const discoveredUrls = [];
+    
+    $('a[href]').each((i, el) => {
+      const href = $(el).attr('href');
+      if (href && href.startsWith('http') && href.includes('memphistn.gov')) {
+        // Filter out irrelevant pages
+        if (!href.includes('#') && 
+            !href.includes('.pdf') && 
+            !href.includes('.doc') && 
+            !href.includes('.jpg') && 
+            !href.includes('.png') &&
+            !href.includes('mailto:') &&
+            !href.includes('tel:')) {
+          discoveredUrls.push(href);
+        }
+      } else if (href && href.startsWith('/')) {
+        const fullUrl = new URL(href, baseUrl).href;
+        if (fullUrl.includes('memphistn.gov') && 
+            !fullUrl.includes('#') && 
+            !fullUrl.includes('.pdf') && 
+            !fullUrl.includes('.doc') && 
+            !fullUrl.includes('.jpg') && 
+            !fullUrl.includes('.png') &&
+            !fullUrl.includes('mailto:') &&
+            !fullUrl.includes('tel:')) {
+          discoveredUrls.push(fullUrl);
+        }
+      }
+    });
+    
+    return [...new Set(discoveredUrls)]; // Remove duplicates
+  } catch (error) {
+    console.log(`Error discovering URLs from ${baseUrl}:`, error.message);
+    return [];
+  }
+}
 
 /**
  * Clean and normalize text content
@@ -195,8 +238,23 @@ async function scrapeAllPages() {
       }
     }
     
-    // Scrape additional URLs
-    for (const url of ADDITIONAL_URLS) {
+    // Discover and scrape additional URLs dynamically
+    const allUrls = new Set();
+    
+    // Start with base URLs and discover more
+    for (const baseUrl of BASE_URLS) {
+      console.log(`Discovering URLs from: ${baseUrl}`);
+      const discoveredUrls = await discoverUrls(baseUrl, 2);
+      discoveredUrls.forEach(url => allUrls.add(url));
+      
+      // Add delay to be respectful
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    console.log(`Found ${allUrls.size} URLs to scrape`);
+    
+    // Scrape all discovered URLs
+    for (const url of Array.from(allUrls)) {
       const pageData = await scrapeUrl(url);
       if (pageData) {
         await processPage(pageData);

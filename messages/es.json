@@ -1,0 +1,33 @@
+{
+  "ui": {
+    "title": "Beale",
+    "subtitle": "Ayuda y armonía — directo de Beale",
+    "welcome": "¡Bienvenido a Beale!",
+    "welcomeMessage": "Estoy aquí para ayudarles con los servicios de la ciudad de Memphis, reportar problemas y responder preguntas en inglés, español o árabe.",
+    "welcomeGreeting": "¡Hola! Soy Beale, directo de Beale Street",
+    "welcomeDescription": "Estoy aquí para ayudarte con cualquier servicio de la ciudad de Memphis que necesites - ya sea reportar baches, obtener permisos, o simplemente averiguar cómo hacer las cosas aquí.",
+    "welcomeLanguages": "¡Hablo inglés, español y árabe - así que en el idioma que prefieras, estamos listos!",
+    "bealeThinking": "Beale está preparando una respuesta...",
+    "enterMessage": "Ingresa tu mensaje...",
+    "sendMessage": "Enviar mensaje",
+    "exampleQuestions": "Preguntas de Ejemplo:",
+    "examplePotholeSlider": "¿Cómo reporto un bache?",
+    "exampleTrashSlider": "¿Cuándo es mi recolección de basura?",
+    "examplePermitSlider": "¿Cómo obtengo un permiso de estacionamiento?",
+    "online": "¡Estamos en línea!",
+    "quickAccess": "Acceso Rápido",
+    "communityServices": "Servicios Comunitarios",
+    "cityServices": "Servicios de la Ciudad",
+    "emergency": "Emergencia",
+    "immediate": "Inmediato",
+    "min": "min",
+    "varies": "Varía",
+    "callForWaitTime": "Llama para tiempo de espera actual",
+    "poweredBy": "IMPULSADO POR",
+    "relevantResources": "Recursos Relevantes",
+    "relevance": "Relevancia",
+    "clickToClose": "Haz clic para cerrar este menú",
+    "multilingualHelp": "Obtén ayuda en inglés, español o árabe"
+  },
+  "greeting": "¡Hola Memphis! Soy Beale, directo de Beale Street. Estoy aquí para ayudarte con servicios de la ciudad, reportar problemas y responder preguntas en inglés, español o árabe. ¡Mantengamos Memphis suave y manejemos las cosas juntos!"
+}
