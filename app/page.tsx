@@ -332,7 +332,15 @@ export default function Home() {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = 'en-US';
+        
+        // Set language based on selected language
+        const langMap: {[key: string]: string} = {
+          'en': 'en-US',
+          'es': 'es-ES',
+          'ar': 'ar-SA'
+        };
+        recognition.lang = langMap[selectedLanguage] || 'en-US';
+        console.log('Speech recognition language set to:', recognition.lang);
         
         recognition.onstart = () => {
           console.log('Recognition started - setting isVoiceMode to true');
@@ -484,7 +492,7 @@ export default function Home() {
         recognitionRef.current = recognition;
       }
     }
-  }, []);
+  }, [selectedLanguage]); // Re-initialize when language changes
 
   const sendMessage = async (messageText?: string, fromVoice: boolean = false) => {
     // Use the provided message text or fall back to input state
