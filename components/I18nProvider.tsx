@@ -23,7 +23,7 @@ const resources = {
       'ui.voiceInputAvailable': 'Voice input available',
       'ui.clickToClose': 'Click to close this menu',
       'ui.welcomeGreeting': 'Help and harmony — straight from Beale',
-      'ui.welcomeDescription': "I'm here to help y'all with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
+      'ui.welcomeDescription': "I'm here to help with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
       'ui.welcomeLanguages': "I speak English, Spanish, and Arabic - so whatever language you prefer, we're good to go!",
       'ui.bealeThinking': 'Beale is cooking up an answer...',
       'ui.enterMessage': 'Enter your message...',

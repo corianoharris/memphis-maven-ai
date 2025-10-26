@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
 
 interface Message {
   id: string;
@@ -55,6 +59,7 @@ export default function Home() {
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [quickAccessData, setQuickAccessData] = useState<any>(null);
+  const [quickAccessLoading, setQuickAccessLoading] = useState(false);
   const [expandedResources, setExpandedResources] = useState<{[key: string]: boolean}>({});
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -88,12 +93,128 @@ export default function Home() {
     return key;
   };
 
+  // Sync selectedLanguage with i18n language on initial load only
+  useEffect(() => {
+    if (!i18n.isInitialized) return;
+
+    // Set initial language based on i18n's detected/saved language
+    const initialLang = i18n.language as 'en' | 'es' | 'ar';
+    console.log('Initial language from i18n:', initialLang, 'Current selectedLanguage:', selectedLanguage);
+    
+    // Only update if different to avoid unnecessary updates
+    if (selectedLanguage !== initialLang) {
+      console.log('Syncing selectedLanguage with i18n initial language');
+      setSelectedLanguage(initialLang);
+    }
+  }, [i18n.isInitialized]); // Only run when i18n is initialized
+
   // Language change handler
   const changeLanguage = (lang: 'en' | 'es' | 'ar') => {
-    i18n.changeLanguage(lang);
+    console.log('Changing language to:', lang);
+    
+    // Update local state first
     setSelectedLanguage(lang);
+    
+    // Manually save to localStorage to ensure it's persisted
+    try {
+      localStorage.setItem('i18nextLng', lang);
+      console.log('Saved to localStorage:', lang);
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+    
+    // Then update i18n (this should also save to localStorage)
+    i18n.changeLanguage(lang).then(() => {
+      console.log('Language changed successfully to:', lang);
+      console.log('i18n.language is now:', i18n.language);
+      console.log('localStorage i18nextLng:', localStorage.getItem('i18nextLng'));
+    }).catch((err) => {
+      console.error('Error changing language:', err);
+    });
+    
     setInput(''); // Clear input when language changes
   };
+
+  // Function to generate dynamic thinking message based on user input
+  const getThinkingMessage = (): string => {
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.text.trim();
+    
+    if (!lastUserMessage) {
+      return tFallback('ui.bealeThinking');
+    }
+
+    // Get first few words from the message
+    const firstWords = lastUserMessage.toLowerCase().split(' ').slice(0, 3).join(' ');
+    
+    // Map specific opening patterns to thinking messages
+    const thinkingMessages: {[key: string]: string} = {
+      'hello': selectedLanguage === 'es' ? 'Hola! Permíteme pensar en eso...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر في ذلك...' : "Hey there! Let me think about that...",
+      'hi': selectedLanguage === 'es' ? 'Hola! Permíteme pensar...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر...' : "Hi! Let me think...",
+      'hey': selectedLanguage === 'es' ? '¡Hey! Déjame pensar...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر...' : "Hey! Let me think...",
+      'i need': selectedLanguage === 'es' ? 'Claro, déjame ayudarte con eso...' : selectedLanguage === 'ar' ? 'طبعاً، دعني أساعدك في ذلك...' : "Of course, let me help you with that...",
+      'i want': selectedLanguage === 'es' ? 'Entiendo, déjame ayudarte...' : selectedLanguage === 'ar' ? 'أفهم، دعني أساعدك...' : "I understand, let me help you...",
+      'can you': selectedLanguage === 'es' ? 'Por supuesto, déjame ver...' : selectedLanguage === 'ar' ? 'بالطبع، دعني أرى...' : "Of course, let me check...",
+      'help me': selectedLanguage === 'es' ? 'Por supuesto, déjame ayudarte...' : selectedLanguage === 'ar' ? 'بالطبع، دعني أساعدك...' : "Of course, let me help you...",
+      'how do': selectedLanguage === 'es' ? 'Déjame explicarte cómo...' : selectedLanguage === 'ar' ? 'دعني أشرح لك كيف...' : "Let me explain how...",
+      'what': selectedLanguage === 'es' ? 'Déjame buscar esa información...' : selectedLanguage === 'ar' ? 'دعني أبحث عن تلك المعلومات...' : "Let me find that information...",
+      'where': selectedLanguage === 'es' ? 'Déjame buscar esa ubicación...' : selectedLanguage === 'ar' ? 'دعني أبحث عن ذلك الموقع...' : "Let me find that location...",
+      'when': selectedLanguage === 'es' ? 'Déjame verificar el horario...' : selectedLanguage === 'ar' ? 'دعني أتحقق من الجدول الزمني...' : "Let me check the schedule...",
+      'thank': selectedLanguage === 'es' ? 'De nada! Déjame ver qué puedo hacer...' : selectedLanguage === 'ar' ? 'على الرحب! دعني أرى ماذا يمكنني أن أفعل...' : "You're welcome! Let me see what I can do...",
+      'report': selectedLanguage === 'es' ? 'Claro, déjame guiarte...' : selectedLanguage === 'ar' ? 'طبعاً، دعني أرشدك...' : "Of course, let me guide you...",
+      'there is': selectedLanguage === 'es' ? 'Entiendo, déjame ayudarte a reportar esto...' : selectedLanguage === 'ar' ? 'أفهم، دعني أساعدك على الإبلاغ عن ذلك...' : "I understand, let me help you report this...",
+    };
+
+    // Check for specific patterns first (full message)
+    const fullMessageLower = lastUserMessage.toLowerCase();
+    for (const [pattern, message] of Object.entries(thinkingMessages)) {
+      if (fullMessageLower.includes(pattern)) {
+        return message;
+      }
+    }
+
+    // Generate dynamic message based on first few words
+    const words = lastUserMessage.split(' ').slice(0, 3);
+    const firstWord = words[0].toLowerCase();
+    
+    if (firstWord === 'how' || firstWord === 'what' || firstWord === 'where' || firstWord === 'when' || firstWord === 'why') {
+      return selectedLanguage === 'es' 
+        ? `Déjame pensar en "${words.join(' ')}"...` 
+        : selectedLanguage === 'ar' 
+          ? `دعني أفكر في "${words.join(' ')}"...`
+          : `Let me think about "${words.join(' ')}"...`;
+    }
+
+    // Default dynamic message with first few words
+    return selectedLanguage === 'es'
+      ? `Vale, déjame pensar sobre "${words.join(' ')}"...`
+      : selectedLanguage === 'ar'
+        ? `حسناً، دعني أفكر في "${words.join(' ')}"...`
+        : `Alright, let me think about "${words.join(' ')}"...`;
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const languageSelector = document.querySelector('[data-language-selector]');
+      const languageToggle = document.querySelector('[data-language-toggle]');
+      
+      if (
+        showLanguageSelector &&
+        languageSelector &&
+        !languageSelector.contains(target) &&
+        languageToggle &&
+        !languageToggle.contains(target)
+      ) {
+        setShowLanguageSelector(false);
+      }
+    };
+
+    if (showLanguageSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLanguageSelector]);
 
 
   // Function to translate resource titles with automatic key generation
@@ -121,12 +242,23 @@ export default function Home() {
     return title;
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToNewMessage = () => {
+    // Small delay to ensure DOM has updated and animations have started
+    setTimeout(() => {
+      const messageElements = document.querySelectorAll('[data-message-id]');
+      if (messageElements.length > 0) {
+        const lastMessage = messageElements[messageElements.length - 1] as HTMLElement;
+        lastMessage.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start', // This ensures the top of the message (including avatar) is visible
+          inline: 'nearest' 
+        });
+      }
+    }, 100); // Small delay to allow for DOM updates and animation start
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollToNewMessage();
   }, [messages]);
 
   // Set client flag after hydration
@@ -137,14 +269,17 @@ export default function Home() {
   // Fetch Quick Access data
   useEffect(() => {
     const fetchQuickAccessData = async () => {
+      setQuickAccessLoading(true);
       try {
-        const response = await fetch('/api/quick-access');
+        const response = await fetch(`/api/quick-access?lang=${selectedLanguage}`);
         const data = await response.json();
         if (data.success) {
           setQuickAccessData(data.data);
         }
       } catch (error) {
         console.error('Failed to fetch Quick Access data:', error);
+      } finally {
+        setQuickAccessLoading(false);
       }
     };
 
@@ -153,7 +288,7 @@ export default function Home() {
     // Refresh data every 5 minutes
     const interval = setInterval(fetchQuickAccessData, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedLanguage]);
 
   // Format times on client side to avoid hydration mismatch
   useEffect(() => {
@@ -676,6 +811,132 @@ export default function Home() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{tFallback('ui.quickAccess')}</h3>
                   <div className="flex items-center space-x-2">
+                    {/* Language Selector */}
+                    <div className="relative group z-[99999]">
+                      <button 
+                        data-language-toggle
+                        onClick={() => !isLoading && setShowLanguageSelector(!showLanguageSelector)}
+                        disabled={isLoading}
+                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 flex items-center space-x-1 shadow-md ${
+                          isLoading 
+                            ? 'text-gray-400 cursor-not-allowed opacity-50' 
+                            : 'text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80'
+                        }`}
+                      >
+                        {/* Language Icon */}
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+                        </svg>
+                        {/* Current Language Indicator */}
+                        <span className="text-xs font-medium">
+                          {selectedLanguage === 'en' ? 'EN' : selectedLanguage === 'es' ? 'ES' : 'AR'}
+                        </span>
+                      </button>
+                      
+                      {/* Language Dropdown */}
+                      {showLanguageSelector && (
+                        <div data-language-selector className="absolute right-0 top-full mt-2 w-32 bg-white rounded-lg shadow-2xl border-2 border-blue-200 z-[99999]">
+                          <div className="p-2">
+                            <button
+                              onClick={() => {
+                                changeLanguage('en');
+                                setShowLanguageSelector(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                                selectedLanguage === 'en' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              🇺🇸 English
+                            </button>
+                            <button
+                              onClick={() => {
+                                changeLanguage('es');
+                                setShowLanguageSelector(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                                selectedLanguage === 'es' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              🇪🇸 Español
+                            </button>
+                            <button
+                              onClick={() => {
+                                changeLanguage('ar');
+                                setShowLanguageSelector(false);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                                selectedLanguage === 'ar' 
+                                  ? 'bg-blue-100 text-blue-700' 
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              🇸🇦 العربية
+                            </button>
+                  </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Clear Messages Button */}
+                    <button 
+                      onClick={() => !isLoading && clearMessages()}
+                      disabled={isLoading}
+                      className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md ${
+                        isLoading 
+                          ? 'text-gray-400 cursor-not-allowed opacity-50' 
+                          : 'text-blue-600 hover:text-white hover:bg-blue-700 hover:bg-opacity-80'
+                      }`}
+                      title={isLoading ? "Please wait while Beale is thinking..." : "Clear messages"}
+                    >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                    </button>
+                    
+                    {/* Three Dots Menu */}
+                    <div className="relative">
+                      <button 
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                      </button>
+                      
+                      {/* Dropdown Menu */}
+                      {showDropdown && (
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
+                          <div className="p-4">
+                            <div className="font-bold text-lg mb-2 text-blue-600">{tFallback('ui.howToUse')}</div>
+                            <div className="font-semibold text-base mb-3 text-gray-800">{tFallback('ui.howToUseMemphis')}</div>
+                            <div className="text-sm space-y-2">
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                                <span className="font-medium text-gray-800">211 {tFallback('ui.communityServices')}</span>
+                      </div>
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                                <span className="text-gray-800">311 {tFallback('ui.cityServices')}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
+                                <span className="text-gray-800">911 {tFallback('ui.emergency')} Services</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                                <span className="text-gray-800">{tFallback('ui.multilingualHelp')}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     {/* Online Status Pill */}
                     <div className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -692,61 +953,86 @@ export default function Home() {
                 </div>
                 </div>
                 <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 md:gap-4">
-                  <a 
-                    href={`tel:${quickAccessData?.services?.['211']?.phone || '211'}`}
-                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
-                      quickAccessData?.services?.['211']?.status === 'busy' 
-                        ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                        : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
-                    }`}
-                  >
-                    <div className="font-bold tracking-wide">211</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.communityServices')}</div>
-                    <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
-                    </div>
-                  </a>
-                  <a 
-                    href={`tel:${quickAccessData?.services?.['311']?.phone || '901-636-6500'}`}
-                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
-                      quickAccessData?.services?.['311']?.status === 'busy' 
-                        ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                        : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                    }`}
-                  >
-                    <div className="font-bold tracking-wide">311</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.cityServices')}</div>
-                    <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
-                    </div>
-                  </a>
-                  <a 
-                    href={`tel:${quickAccessData?.services?.['911']?.phone || '911'}`}
-                    className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-xs md:text-sm font-medium transition-colors shadow-md ${
-                      quickAccessData?.services?.['911']?.status === 'busy' 
-                        ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                        : 'bg-red-100 hover:bg-red-200 text-red-800'
-                    }`}
-                  >
-                    <div className="font-bold tracking-wide">911</div>
-                    <div className="text-xs opacity-75 tracking-wide">{tFallback('ui.emergency')}</div>
-                    <div className="text-xs opacity-60 tracking-wide">
-                      {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
-                       quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
-                       quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
-                    </div>
-                  </a>
+                  {quickAccessLoading ? (
+                    <>
+                      {/* Skeleton Loader for 211 */}
+                      <div className="px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md bg-gray-100 animate-pulse">
+                        <div className="h-5 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded"></div>
+                      </div>
+                      {/* Skeleton Loader for 311 */}
+                      <div className="px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md bg-gray-100 animate-pulse">
+                        <div className="h-5 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded"></div>
+                      </div>
+                      {/* Skeleton Loader for 911 */}
+                      <div className="px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md bg-gray-100 animate-pulse">
+                        <div className="h-5 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-300 rounded"></div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <a 
+                        href={`tel:${quickAccessData?.services?.['211']?.phone || '211'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
+                          quickAccessData?.services?.['211']?.status === 'busy' 
+                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
+                            : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
+                        }`}
+                      >
+                        <div className="font-bold tracking-wide text-base md:text-lg">211</div>
+                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.communityServices')}</div>
+                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                          {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
+                           quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
+                           quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
+                        </div>
+                      </a>
+                      <a 
+                        href={`tel:${quickAccessData?.services?.['311']?.phone || '901-636-6500'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
+                          quickAccessData?.services?.['311']?.status === 'busy' 
+                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+                        }`}
+                      >
+                        <div className="font-bold tracking-wide text-base md:text-lg">311</div>
+                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.cityServices')}</div>
+                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                          {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
+                           quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
+                           quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
+                        </div>
+                      </a>
+                      <a 
+                        href={`tel:${quickAccessData?.services?.['911']?.phone || '911'}`}
+                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
+                          quickAccessData?.services?.['911']?.status === 'busy' 
+                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
+                            : 'bg-red-100 hover:bg-red-200 text-red-800'
+                        }`}
+                      >
+                        <div className="font-bold tracking-wide text-base md:text-lg">911</div>
+                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.emergency')}</div>
+                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                          {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
+                           quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
+                           quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
+                        </div>
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Header */}
             <div className="px-6 py-2 bg-white bg-opacity-95 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-center">
                 <div className="flex items-center space-x-3">
                   <div 
                     className="w-12 h-12 bg-transparent bg-opacity-20 rounded-full flex items-center justify-center overflow-visible cursor-help relative group"
@@ -774,155 +1060,14 @@ export default function Home() {
                         }
                       }}
                     />
-                    {/* <img 
-                      src="/Beale_blue.png" 
-                      alt="Beale Avatar SVG" 
-                      className="w-full h-full object-cover rounded-full hidden fallback-svg"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        // Ultimate fallback to letter
-                        const letterFallback = target.parentElement?.querySelector('.letter-fallback') as HTMLElement;
-                        if (letterFallback) {
-                          letterFallback.classList.remove('hidden');
-                          letterFallback.classList.add('flex');
-                        }
-                      }}
-                    /> */}
-                    {/* <div className="w-full h-full bg-white bg-opacity-20 rounded-full items-center justify-center hidden letter-fallback">
-                      <span className="text-white font-bold text-xl">M</span>
-                    </div> */}
-                    
                   </div>
                   
                   <div>
                     <h2 className="text-gray-900 font-bold text-xl tracking-wide">Beale</h2>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* Language Selector */}
-                  <div className="relative group">
-                    <button 
-                      onClick={() => setShowLanguageSelector(!showLanguageSelector)}
-                      className="text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 flex items-center space-x-1 shadow-md"
-                    >
-                      {/* Language Icon */}
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-                      </svg>
-                      {/* Current Language Indicator */}
-                      <span className="text-xs font-medium">
-                        {selectedLanguage === 'en' ? 'EN' : selectedLanguage === 'es' ? 'ES' : 'AR'}
-                      </span>
-                    </button>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                      {tFallback('ui.selectLanguage')}
-                  </div>
-                    
-                    {/* Language Dropdown */}
-                    {showLanguageSelector && (
-                      <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
-                        <div className="p-2">
-                          <button
-                            onClick={() => {
-                              changeLanguage('en');
-                              setShowLanguageSelector(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                              selectedLanguage === 'en' ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            🇺🇸 English
-                          </button>
-                          <button
-                            onClick={() => {
-                              changeLanguage('es');
-                              setShowLanguageSelector(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                              selectedLanguage === 'es' ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            🇪🇸 Español
-                          </button>
-                          <button
-                            onClick={() => {
-                              changeLanguage('ar');
-                              setShowLanguageSelector(false);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                              selectedLanguage === 'ar' ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          >
-                            🇸🇦 العربية
-                          </button>
-                </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <button 
-                    onClick={clearMessages}
-                    className="text-blue-600 hover:text-white hover:bg-blue-700 hover:bg-opacity-80 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md"
-                    title="Clear messages"
-                  >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                  </button>
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowDropdown(!showDropdown)}
-                      className="text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md"
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                      </svg>
-                    </button>
-                    
-                    {/* Dropdown Menu */}
-                    {showDropdown && (
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
-                        <div className="p-4">
-                          <div className="font-bold text-lg mb-2 text-blue-600">{tFallback('ui.howToUse')}</div>
-                          <div className="font-semibold text-base mb-3 text-gray-800">{tFallback('ui.howToUseMemphis')}</div>
-                          <div className="text-sm space-y-2">
-                            <div className="flex items-center">
-                              <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                              <span className="font-medium text-gray-800">211 {tFallback('ui.communityServices')}</span>
-                      </div>
-                            <div className="flex items-center">
-                              <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">311 {tFallback('ui.cityServices')}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">911 {tFallback('ui.emergency')} Services</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">{tFallback('ui.multilingualHelp')}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <span className="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-                              <span className="text-gray-800">{tFallback('ui.voiceInputAvailable')}</span>
-                            </div>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <div className="text-xs text-gray-600 text-center">
-{tFallback('ui.clickToClose')}
-                            </div>
-                          </div>
-                        </div>
-                    </div>
-                  )}
-                  </div>
+              </div>
             </div>
-          </div>
-        </div>
-            
 
             {/* Messages Area */}
             <div className="h-96 overflow-y-auto p-6 bg-gray-50">
@@ -930,11 +1075,11 @@ export default function Home() {
                 <div className="flex flex-col items-center justify-start pt-8 h-full text-center">
                  
                 
-                  <div className="text-gray-600 mb-2 max-w-sm text-sm space-y-2">
-                    <p className="font-medium text-gray-800">
+                  <div className="text-gray-600 mb-2 max-w-sm text-base space-y-2 tracking-wide">
+                    <p className="font-medium text-gray-800 text-lg tracking-wide">
                       {tFallback('ui.welcomeGreeting')}
                     </p>
-                    <p>
+                    <p className="tracking-wide">
                       {tFallback('ui.welcomeDescription')}
                     </p>
                   </div>
@@ -943,7 +1088,7 @@ export default function Home() {
                   <div className="w-full max-w-sm space-y-2">
                         <button
                       onClick={() => setInput(tFallback('ui.examplePotholeSlider'))}
-                      className="w-full text-left p-3 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors text-sm text-gray-700 hover:shadow-sm"
+                      className="w-full text-left p-3 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors text-base text-gray-700 hover:shadow-sm tracking-wide"
                         >
                       {tFallback('ui.examplePotholeSlider')}
                         </button>
@@ -954,17 +1099,14 @@ export default function Home() {
                   {messages.map((message, index) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} ${
-                        index === messages.length - 1 
-                          ? message.role === 'user' 
-                            ? 'animate-slide-in-from-right animate-fade-in-slow' 
-                            : 'animate-slide-in-from-left animate-fade-in-slow'
-                          : ''
+                      data-message-id={message.id}
+                      className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} ${
+                        message.role === 'assistant' ? 'animate-fade-in-slow' : ''
                       }`}
-                      style={index === messages.length - 1 && message.role === 'assistant' ? { animationDelay: '0.5s' } : {}}
                     >
-                      {message.role === 'assistant' && (
-                        <div className="w-8 h-8 mr-2 flex-shrink-0">
+                      {/* Avatar - positioned at top */}
+                      {message.role === 'assistant' ? (
+                        <div className="w-8 h-8 mb-2 flex-shrink-0">
                           <img 
                             src="/Beale_blue.png" 
                             alt="Beale Avatar" 
@@ -975,72 +1117,30 @@ export default function Home() {
                             }}
                           />
                         </div>
+                      ) : (
+                        <div className="w-12 h-8 mb-2 flex-shrink-0">
+                          <div className="w-full h-full bg-purple-200 rounded-full flex items-center justify-center px-2">
+                            <span className="text-purple-800 text-xs font-medium">User</span>
+                          </div>
+                        </div>
                       )}
+                      
+                      {/* Message bubble */}
                       <div
                         className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
                           message.role === 'user'
                             ? 'bg-purple-200 text-purple-800 rounded-br-md hover:bg-purple-200'
                             : 'bg-blue-100 text-blue-800 rounded-bl-md border border-gray-200 hover:border-gray-300'
                         }`}
+                        style={{ zIndex: message.role === 'assistant' ? 1 : 'auto' }}
                       >
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap tracking-wide">
-                          {message.text.split('\n').map((line, index) => {
-                            // First check if line contains bold text with **
-                            if (line.includes('**')) {
-                              // Split by ** patterns and process each part
-                              const parts = line.split(/(\*\*[^*]+\*\*)/g);
-                              console.log('Processing bold text:', line, 'Parts:', parts);
-                              return (
-                                <div key={index} className="my-1">
-                                  {parts.map((part, partIndex) => {
-                                    // Check if this part is wrapped in **
-                                    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-                                      const boldText = part.slice(2, -2); // Remove ** from start and end
-                                      console.log('Making bold:', boldText);
-                                      return (
-                                        <span key={partIndex} style={{fontWeight: 'bold', color: '#1f2937'}}>
-                                          {boldText}
-                                        </span>
-                                      );
-                                    }
-                                    return part;
-                                  })}
-                                </div>
-                              );
-                            }
-                            // Check if line starts with a number and period (like "1. " or "2. ")
-                            if (/^\d+\.\s/.test(line.trim())) {
-                              return (
-                                <div key={index} className="flex items-start space-x-2 my-1">
-                                  <span className="font-semibold text-blue-600 flex-shrink-0">
-                                    {line.match(/^\d+/)?.[0]}.
-                                  </span>
-                                  <span className="flex-1">
-                                    {line.replace(/^\d+\.\s/, '')}
-                                  </span>
-                                </div>
-                              );
-                            }
-                            // Check if line starts with "Why this works best:" or "Alternative:" or "Timeline:"
-                            if (/^(Why this works best|Alternative|Timeline):/.test(line.trim())) {
-                              return (
-                                <div key={index} className="my-1">
-                                  <span style={{fontWeight: 'bold', color: '#15803d'}}>
-                                    {line.match(/^[^:]+/)?.[0]}:
-                                  </span>
-                                  <span className="ml-1">
-                                    {line.replace(/^[^:]+:\s*/, '')}
-                                  </span>
-                                </div>
-                              );
-                            }
-                            // Regular line
-                            return (
-                              <div key={index} className={line.trim() === '' ? 'h-2' : ''}>
-                                {line}
-                              </div>
-                            );
-                          })}
+                        <div className="markdown-content tracking-wide">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                          >
+                            {message.text}
+                          </ReactMarkdown>
                         </div>
                         
                         {/* Display attached files for user messages */}
@@ -1205,7 +1305,7 @@ export default function Home() {
                           <div className="mt-3 space-y-2">
                             {/* Divider line */}
                             <div className="border-t border-gray-200 my-3"></div>
-                            <div className="text-xs font-medium text-gray-600 mb-2 tracking-wide">
+                            <div className="text-sm font-medium text-gray-600 mb-2 tracking-wide">
                               {tFallback('ui.relevantResources')} ({message.relevantPages.length}):
                             </div>
                             {(expandedResources[message.id] ? message.relevantPages : message.relevantPages.slice(0, 5)).map((page, index) => (
@@ -1216,13 +1316,13 @@ export default function Home() {
             rel="noopener noreferrer"
                                   className="block hover:bg-gray-100 transition-colors rounded p-1"
                                 >
-                                  <div className="text-xs font-medium text-blue-700 hover:text-blue-800 overflow-hidden tracking-wide" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                  <div className="text-sm font-medium text-blue-700 hover:text-blue-800 overflow-hidden tracking-wide" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                                     {translateResourceTitle(page.title)}
                                   </div>
-                                  <div className="text-xs text-gray-500 mt-1 truncate tracking-wide">
+                                  <div className="text-sm text-gray-500 mt-1 truncate tracking-wide">
                                     {page.url}
                                   </div>
-                                  <div className="text-xs text-gray-400 mt-1 flex items-center space-x-1 tracking-wide">
+                                  <div className="text-sm text-gray-400 mt-1 flex items-center space-x-1 tracking-wide">
                                     <span>{tFallback('ui.relevance')}:</span>
                                     <span className={`font-medium ${
                                       page.similarity > 0.7 ? 'text-green-600' : 
@@ -1240,7 +1340,7 @@ export default function Home() {
                                   ...prev,
                                   [message.id]: !prev[message.id]
                                 }))}
-                                className="w-full text-xs text-blue-600 hover:text-blue-800 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                                className="w-full text-sm text-blue-600 hover:text-blue-800 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors font-medium tracking-wide"
                               >
                                 {expandedResources[message.id] 
                                   ? `Show Less (${message.relevantPages.length - 5} hidden)` 
@@ -1266,7 +1366,7 @@ export default function Home() {
                     </div>
                   ))}
                   {isLoading && (
-                    <div className="flex justify-start animate-slide-in-from-left animate-fade-in-slow">
+                    <div className="flex justify-start">
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <img 
                           src="/Beale_blue.png" 
@@ -1285,7 +1385,7 @@ export default function Home() {
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
-                          <span className="text-sm font-medium">{tFallback('ui.bealeThinking')}</span>
+                          <span className="text-sm font-medium tracking-wide">{getThinkingMessage()}</span>
                         </div>
                       </div>
                     </div>

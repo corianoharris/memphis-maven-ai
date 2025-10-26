@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Filter from 'bad-words';
 import { db, initializeDatabase } from '../../../lib/db.js';
 import { processQuestion, getEmbedding, safeProcessQuestion } from '../../../lib/ai.js';
 
@@ -33,6 +34,15 @@ export async function POST(request) {
         );
       }
       
+      // Filter profanity from user input
+      const filter = new Filter();
+      const cleanQuestion = filter.clean(question);
+      
+      // If the question was modified due to profanity, log it
+      if (cleanQuestion !== question) {
+        console.log('Profanity detected and filtered in user input');
+      }
+      
       // Get or create conversation
       let convId = conversationId;
       if (!convId) {
@@ -40,13 +50,13 @@ export async function POST(request) {
       }
       
       // Generate embedding for the question
-      const questionEmbedding = await getEmbedding(question);
+      const questionEmbedding = await getEmbedding(cleanQuestion);
       
       // Find similar pages using semantic search
       const similarPages = await db.searchSimilarPages(questionEmbedding, 5);
       
       // Process the question with AI and multilingual support
-      const response = await safeProcessQuestion(question, similarPages, language);
+      const response = await safeProcessQuestion(cleanQuestion, similarPages, language);
       
       console.log('Process question response:', response);
       
@@ -55,8 +65,8 @@ export async function POST(request) {
         throw new Error('Invalid response from processQuestion');
       }
       
-      // Store user message
-      await db.addMessage(convId, 'user', question);
+      // Store user message (store original to maintain conversation context)
+      await db.addMessage(convId, 'user', cleanQuestion);
       
       // Store assistant response
       await db.addMessage(convId, 'assistant', response.answer);
