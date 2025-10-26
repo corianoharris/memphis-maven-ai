@@ -101,7 +101,7 @@ export default function Home() {
         'ui.callForWaitTime': 'Call for current wait time',
         'ui.poweredBy': 'POWERED BY',
         'ui.welcome': 'Welcome to Beale!',
-        'ui.welcomeMessage': "I'm here to help y'all with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
+        'ui.welcomeMessage': "I'm here to help with Memphis city services, report issues, and answer questions in English, Spanish, or Arabic.",
         'ui.welcomeGreeting': "Hey! I'm Beale, straight from Beale Street",
         'ui.welcomeDescription': "I'm here to help out with whatever Memphis city services you need - whether it's reporting potholes, getting permits, or just figuring out how to get stuff done around here.",
         'ui.welcomeLanguages': "I speak English, Spanish, and Arabic - so whatever language you prefer, we're good to go!",

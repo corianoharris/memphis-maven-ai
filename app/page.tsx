@@ -77,9 +77,13 @@ export default function Home() {
   const [imageLoadingStates, setImageLoadingStates] = useState<{[key: string]: boolean}>({});
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es' | 'ar'>('en');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const pendingMessageRef = useRef<string>(''); // Store message temporarily for voice
 
   // Initialize i18n hook after all state hooks
   const { t, i18n } = useTranslation();
@@ -320,54 +324,150 @@ export default function Home() {
         recognition.lang = 'en-US';
         
         recognition.onstart = () => {
+          console.log('Recognition started - setting isVoiceMode to true');
           setIsListening(true);
+          setIsVoiceMode(true); // Enable text-to-speech for responses
         };
         
         recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          setInput(transcript);
-          setIsListening(false);
+          console.log('Recognition result received:', event.results);
+          const transcript = event.results[0][0].transcript.trim();
+          const lowerTranscript = transcript.toLowerCase();
+          console.log('Transcript:', transcript);
+          
+          // Check for attachment command
+          const attachmentCommands = ['attachment', 'attach', 'attach file', 'add file', 'upload', 'upload file'];
+          const isAttachmentCommand = attachmentCommands.some(cmd => 
+            lowerTranscript.includes(cmd)
+          );
+          
+          // Check for emoji command
+          const emojiCommands = ['emoji', 'add emoji', 'emoji picker', 'show emoji'];
+          const isEmojiCommand = emojiCommands.some(cmd => 
+            lowerTranscript.includes(cmd)
+          );
           
           // Check if user said a send command
           const sendCommands = ['send', 'send message', 'go', 'submit', 'enter'];
-          const shouldAutoSend = sendCommands.some(cmd => 
-            transcript.toLowerCase().includes(cmd)
+          const isSendCommand = sendCommands.some(cmd => 
+            lowerTranscript.includes(cmd)
           );
           
-          if (shouldAutoSend) {
-            // Show voice command feedback
+          console.log('Command check:', {
+            transcript,
+            lowerTranscript,
+            isAttachmentCommand,
+            isEmojiCommand,
+            isSendCommand
+          });
+          
+          // Handle attachment command
+          if (isAttachmentCommand) {
+            setIsListening(false);
+            setVoiceCommand('Opening file picker...');
+            setInput(''); // Clear any text
+            setTimeout(() => {
+              triggerFileInput();
+              setVoiceCommand(null);
+            }, 300);
+            return;
+          }
+          
+          // Handle emoji command
+          if (isEmojiCommand) {
+            setIsListening(false);
+            setVoiceCommand('Opening emoji picker...');
+            setInput(''); // Clear any text
+            setTimeout(() => {
+              setShowEmojiPicker(true);
+              setVoiceCommand(null);
+            }, 300);
+            return;
+          }
+          
+          // Handle send command
+          if (isSendCommand) {
+            console.log('Processing send command...');
             setVoiceCommand('Sending...');
             
-            // Remove the send command from the input
-            const cleanTranscript = transcript
+            // Extract text before the send command
+            const cleanedText = transcript
               .replace(/\b(send|send message|go|submit|enter)\b/gi, '')
               .trim();
-            setInput(cleanTranscript);
             
-            // Auto-send after a short delay
-            setTimeout(() => {
-              if (cleanTranscript) {
-                sendMessage();
+            console.log('Cleaned text:', cleanedText);
+            
+            // Pass the text directly to sendMessage to bypass state delay
+            if (cleanedText) {
+              setInput(cleanedText); // Still update input for UI display
+              
+              // Pass text directly to sendMessage immediately with fromVoice flag
+              console.log('Calling sendMessage with text:', cleanedText, 'isVoiceMode:', isVoiceMode, 'fromVoice: true');
+              sendMessage(cleanedText, true);
+              
+              // Only set listening to false if not in voice mode
+              if (!isVoiceMode) {
+                setIsListening(false);
                 setVoiceCommand(null);
+              } else {
+                // Keep listening in voice mode, just clear the command feedback
+                setTimeout(() => setVoiceCommand(null), 1000);
               }
-            }, 300);
-          } else {
-            // Auto-send the message after a longer delay for regular speech
-            setTimeout(() => {
-              if (transcript.trim()) {
-                sendMessage();
-              }
-            }, 1500);
+            }
+            return;
           }
+          
+          // Regular speech - set input and auto-send after delay
+          setInput(transcript);
+          
+          // Only set listening to false if not in voice mode
+          if (!isVoiceMode) {
+            setIsListening(false);
+          }
+          
+          // Pass transcript directly to sendMessage to bypass state delay
+          setTimeout(() => {
+            if (transcript.trim()) {
+              console.log('Auto-sending message with text:', transcript, 'isVoiceMode:', isVoiceMode, 'fromVoice: true');
+              sendMessage(transcript, true);
+            }
+          }, 1000); // Reduced delay since we're passing text directly
         };
         
         recognition.onerror = (event) => {
           console.error('Speech recognition error:', event.error);
           setIsListening(false);
+          
+          // Provide user-friendly error messages
+          if (event.error === 'no-speech') {
+            console.log('No speech detected. Please check your microphone and try again.');
+            setVoiceCommand('No speech detected. Please check your microphone.');
+          } else if (event.error === 'not-allowed') {
+            console.log('Microphone permission denied. Please allow microphone access.');
+            setVoiceCommand('Microphone permission denied. Please allow access in your browser settings.');
+          } else if (event.error === 'audio-capture') {
+            console.log('No microphone found. Please check your audio devices.');
+            setVoiceCommand('No microphone found.');
+          }
+          
+          // Clear the error message after a delay
+          setTimeout(() => {
+            setVoiceCommand(null);
+          }, 3000);
         };
         
         recognition.onend = () => {
-          setIsListening(false);
+          console.log('Recognition ended');
+          // Only set listening to false if not in voice mode
+          // In voice mode, we want to restart listening after Beale's response
+          if (!isVoiceMode) {
+            setIsListening(false);
+          } else {
+            // Keep the UI showing as listening since we're in voice mode
+            console.log('Voice mode active, will restart listening after response');
+            // Don't immediately restart here - let the response finish first
+            // The listening will resume after the response is spoken
+          }
         };
         
         recognitionRef.current = recognition;
@@ -375,14 +475,42 @@ export default function Home() {
     }
   }, []);
 
-  const sendMessage = async () => {
-    if ((!input.trim() && attachedFiles.length === 0) || isLoading) return;
+  const sendMessage = async (messageText?: string, fromVoice: boolean = false) => {
+    // Use the provided message text or fall back to input state
+    const textToSend = messageText || input;
+    
+    // Capture isVoiceMode at the start to avoid stale closure issues
+    // Also use the fromVoice parameter as a fallback
+    const voiceMode = fromVoice || isVoiceMode;
+    
+    console.log('sendMessage called', {
+      input: input,
+      messageText: messageText,
+      textToSend: textToSend,
+      inputTrimmed: textToSend.trim(),
+      inputLength: textToSend.trim().length,
+      attachedFilesLength: attachedFiles.length,
+      isLoading: isLoading,
+      isVoiceMode: isVoiceMode,
+      fromVoice: fromVoice,
+      voiceMode: voiceMode // Final value used for speaking
+    });
+    
+    if ((!textToSend.trim() && attachedFiles.length === 0) || isLoading) {
+      console.log('Early return in sendMessage');
+      return;
+    }
     
     // Ensure we have either text input or attached files
-    const hasTextInput = input.trim().length > 0;
+    const hasTextInput = textToSend.trim().length > 0;
     const hasFiles = attachedFiles.length > 0;
     
-    if (!hasTextInput && !hasFiles) return;
+    console.log('Has text input:', hasTextInput, 'Has files:', hasFiles);
+    
+    if (!hasTextInput && !hasFiles) {
+      console.log('No text input or files, returning');
+      return;
+    }
 
     // Check if any images are still loading or don't have previews
     const imageFiles = attachedFiles.filter(f => f.type.startsWith('image/'));
@@ -400,7 +528,7 @@ export default function Home() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      text: input.trim() || (attachedFiles.length > 0 ? '' : ''),
+      text: textToSend.trim() || (attachedFiles.length > 0 ? '' : ''),
       timestamp: new Date().toISOString(),
       attachedFiles: attachedFiles.length > 0 ? attachedFiles.map(f => {
         console.log('Mapping file:', f.name, 'Preview available:', !!filePreviews[f.name], 'Preview data:', filePreviews[f.name]?.substring(0, 50) + '...');
@@ -428,7 +556,7 @@ export default function Home() {
     try {
       const requestBody = {
         userId,
-        question: input.trim() || (attachedFiles.length > 0 ? 'I have shared some files that need to be analyzed. Please help me understand what they contain and how they relate to Memphis city services.' : ''),
+        question: textToSend.trim() || (attachedFiles.length > 0 ? 'I have shared some files that need to be analyzed. Please help me understand what they contain and how they relate to Memphis city services.' : ''),
         conversationId,
         language: selectedLanguage
       };
@@ -461,6 +589,19 @@ export default function Home() {
 
       setMessages(prev => [...prev, assistantMessage]);
       setConversationId(data.conversationId);
+      
+      // Speak Beale's response if in voice mode
+      // Use the captured value to avoid stale closure issues
+      console.log('isVoiceMode (current):', isVoiceMode, 'voiceMode (captured):', voiceMode, 'answer length:', data.answer?.length);
+      if (voiceMode) {
+        console.log('Speaking Beale\'s response...');
+        // Add a delay to let the thinking message disappear and response appear
+        setTimeout(() => {
+          speakText(data.answer);
+        }, 1000); // Increased delay for better UX
+      } else {
+        console.log('Not speaking - not in voice mode');
+      }
       
       // Auto-analyze any images that were attached to the user message
       if (userMessage.attachedFiles && userMessage.attachedFiles.length > 0) {
@@ -497,15 +638,131 @@ export default function Home() {
     }
   };
 
-  const startListening = () => {
-    if (recognitionRef.current && !isListening) {
-      recognitionRef.current.start();
+  // Text-to-speech function
+  const speakText = (text: string) => {
+    console.log('speakText called with text:', text?.substring(0, 100));
+    
+    if (!('speechSynthesis' in window)) {
+      console.log('Speech synthesis not supported');
+      return;
     }
+
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+
+    // Clean the text for better speech (remove markdown formatting)
+    const cleanText = text
+      .replace(/[#*_~`]/g, '') // Remove markdown formatting
+      .replace(/\n/g, ' ') // Replace newlines with spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+    
+    console.log('Cleaned text for speech:', cleanText?.substring(0, 100));
+
+    // Create utterance
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    
+    // Set language based on selectedLanguage
+    const langMap: {[key: string]: string} = {
+      'en': 'en-US',
+      'es': 'es-ES',
+      'ar': 'ar-SA'
+    };
+    utterance.lang = langMap[selectedLanguage] || 'en-US';
+    
+    // Set rate and pitch for more natural speech
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 0.9;
+
+    // Event handlers
+    utterance.onstart = () => {
+      console.log('Speech started');
+      setIsSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      console.log('Speech ended');
+      setIsSpeaking(false);
+      
+      // If in voice mode, restart listening after Beale finishes speaking
+      if (isVoiceMode && recognitionRef.current) {
+        console.log('Voice mode active, restarting speech recognition...');
+        setTimeout(() => {
+          if (recognitionRef.current && !isLoading) {
+            try {
+              recognitionRef.current.start();
+              console.log('Speech recognition restarted successfully');
+            } catch (error) {
+              console.log('Could not restart speech recognition (may already be active):', error);
+            }
+          }
+        }, 500); // Small delay to ensure speech is fully finished
+      }
+    };
+
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      setIsSpeaking(false);
+    };
+
+    // Store reference and speak
+    speechSynthesisRef.current = utterance;
+    console.log('Calling window.speechSynthesis.speak()');
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startListening = () => {
+    console.log('startListening called', {
+      hasRecognition: !!recognitionRef.current,
+      isListening,
+      isLoading,
+      recognitionRef: recognitionRef.current
+    });
+    
+    if (!recognitionRef.current) {
+      console.error('No recognition ref available');
+      return;
+    }
+    
+    if (isListening) {
+      console.log('Already listening, stopping...');
+      recognitionRef.current.stop();
+      return;
+    }
+    
+    if (isLoading) {
+      console.log('Currently loading, cannot start');
+      return;
+    }
+    
+    try {
+      console.log('Attempting to start recognition...');
+      setIsVoiceMode(true);
+      recognitionRef.current.start();
+      console.log('Recognition started successfully');
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      // If it's already started, just update the UI state
+      setIsListening(true);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    // Don't reset voice mode on typing - it should persist until message is sent
   };
 
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
+    }
+  };
+
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
   };
 
@@ -1402,7 +1659,7 @@ export default function Home() {
                   <input
                     type="text"
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     placeholder={tFallback('ui.enterMessage')}
                     className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
@@ -1419,6 +1676,18 @@ export default function Home() {
                     accept="image/*,.pdf,.doc,.docx,.txt"
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                    {/* Stop Speaking Button */}
+                    {isSpeaking && (
+                      <button
+                        onClick={stopSpeaking}
+                        className="p-2 rounded-lg transition-colors bg-orange-100 text-orange-600 hover:bg-orange-200"
+                        title="Stop Beale from speaking"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M6 6h12v12H6z" />
+                        </svg>
+                      </button>
+                    )}
                     {/* Speech to Text Button */}
                     {isSupported && (
                       <button
@@ -1470,7 +1739,7 @@ export default function Home() {
                   </div>
                 </div>
                 <button
-                  onClick={sendMessage}
+                  onClick={() => sendMessage()}
                   disabled={(() => {
                     if (isLoading) return true;
                     if (!input.trim() && attachedFiles.length === 0) return true;
