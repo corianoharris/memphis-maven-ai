@@ -80,6 +80,8 @@ export default function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es' | 'ar'>('en');
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [inappropriateMessageCount, setInappropriateMessageCount] = useState(0);
+  const [conversationEnded, setConversationEnded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -324,6 +326,22 @@ export default function Home() {
     setFormattedTimes(times);
   }, [messages, isClient]);
 
+  // Auto-reset to initial state when conversation ends
+  useEffect(() => {
+    if (conversationEnded) {
+      const timer = setTimeout(() => {
+        setMessages([]);
+        setConversationEnded(false);
+        setInappropriateMessageCount(0);
+        setConversationId(null);
+        setInput('');
+        setIsLoading(false);
+      }, 3000); // Wait 3 seconds to show the ending message
+      
+      return () => clearTimeout(timer);
+    }
+  }, [conversationEnded]);
+
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -496,6 +514,12 @@ export default function Home() {
   }, [selectedLanguage]); // Re-initialize when language changes
 
   const sendMessage = async (messageText?: string, fromVoice: boolean = false) => {
+    // Don't allow sending if conversation has ended
+    if (conversationEnded) {
+      console.log('Conversation has ended due to inappropriate language');
+      return;
+    }
+    
     // Don't allow sending if already loading
     if (isLoading) {
       console.log('Already loading, ignoring request');
@@ -505,19 +529,51 @@ export default function Home() {
     // Use the provided message text or fall back to input state
     const textToSend = messageText || input;
     
-    // Check for profanity FIRST before any processing
+    // Check for profanity and hate speech FIRST before any processing
     if (textToSend && textToSend.trim()) {
       const filter = new Filter();
       const hasProfanity = filter.isProfane(textToSend);
       
-      if (hasProfanity) {
-        console.log('Profanity detected - rejecting immediately');
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          text: "I'm here to help you with Memphis city services in a respectful and professional manner. Could you please rephrase your question without using inappropriate language?",
-          timestamp: new Date().toISOString()
-        };
+      // Check for hate speech patterns (case-insensitive)
+      const lowerText = textToSend.toLowerCase();
+      const hatePatterns = [
+        /i hate (.*)?(?:mexican|asian|black|white|hispanic|latino|arab|muslim|jew|jewish|gay|lesbian|trans|disabled|retard|autistic|autist)/i,
+        /(?:fuck|screw|kill) (.*)?(?:mexican|asian|black|white|hispanic|latino|arab|muslim|jew|jewish|gay|lesbian|trans|disabled|retard)/i,
+        /(?:all|every) (.*)?(?:mexican|asian|black|white|hispanic|latino|arab|muslim|jew|jewish|gay|lesbian|trans|disabled|retard) (?:are|is) (?:stupid|ugly|dumb|bad|evil|disgusting)/i,
+        /you are (?:a|an) (?:stupid|dumb|idiot) (?:mexican|asian|black|white|hispanic|latino|arab|muslim|jew|jewish|gay|lesbian|trans|disabled|retard)/i
+      ];
+      
+      const hasHateSpeech = hatePatterns.some(pattern => pattern.test(textToSend));
+      
+      if (hasProfanity || hasHateSpeech) {
+        console.log('Inappropriate content detected - rejecting immediately', { hasProfanity, hasHateSpeech });
+        
+        // Increment the inappropriate message count
+        const newCount = inappropriateMessageCount + 1;
+        setInappropriateMessageCount(newCount);
+        
+        let errorMessage: Message;
+        
+        if (newCount >= 2) {
+          // Second inappropriate message - end the conversation
+          setConversationEnded(true);
+          setIsLoading(false); // Make sure we're not in loading state
+          errorMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            text: "I apologize, but I cannot continue this conversation due to repeated inappropriate language. For assistance with Memphis city services, please call 311 at (901) 636-6500 or visit memphistn.gov. Thank you for understanding.",
+            timestamp: new Date().toISOString()
+          };
+        } else {
+          // First inappropriate message - give a warning
+          errorMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            text: "I'm here to help you with Memphis city services in a respectful and professional manner. Please keep our conversation respectful and appropriate. How can I help you with city services today?",
+            timestamp: new Date().toISOString()
+          };
+        }
+        
         setMessages(prev => [...prev, errorMessage]);
         setInput(''); // Clear the input
         return; // Exit immediately without processing
@@ -1680,7 +1736,7 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
-                  {isLoading && (
+                  {isLoading && !conversationEnded && (
                     <div className="flex justify-start">
                       <div className="w-8 h-8 mr-2 flex-shrink-0">
                         <img 
@@ -1719,9 +1775,9 @@ export default function Home() {
                     value={input}
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
-                    placeholder={tFallback('ui.enterMessage')}
+                    placeholder={conversationEnded ? "Conversation ended" : tFallback('ui.enterMessage')}
                     className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
-                    disabled={isLoading}
+                    disabled={isLoading || conversationEnded}
                   />
                   
                   {/* Hidden file input */}
@@ -1799,6 +1855,7 @@ export default function Home() {
                 <button
                   onClick={() => sendMessage()}
                   disabled={(() => {
+                    if (conversationEnded) return true;
                     if (isLoading) return true;
                     if (!input.trim() && attachedFiles.length === 0) return true;
                     
@@ -1809,7 +1866,7 @@ export default function Home() {
                     return stillLoading.length > 0 || missingPreviews.length > 0;
                   })()}
                   className="w-12 h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:scale-100 active:scale-95"
-                  title="Send message"
+                  title={conversationEnded ? "Conversation ended" : "Send message"}
                 >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

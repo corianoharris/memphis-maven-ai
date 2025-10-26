@@ -9,9 +9,9 @@ import { processQuestion, getEmbedding, safeProcessQuestion } from '../../../lib
  */
 export async function POST(request) {
   try {
-    // Set timeout for the entire request
+    // Set timeout for the entire request (increased to handle slower AI responses)
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timeout')), 60000)
+      setTimeout(() => reject(new Error('Request timeout')), 120000)
     );
     
     const processRequest = async () => {
