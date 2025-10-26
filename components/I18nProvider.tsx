@@ -174,8 +174,10 @@ if (!i18n.isInitialized) {
       },
       
       detection: {
-        order: ['localStorage', 'navigator', 'htmlTag'],
+        order: ['localStorage', 'navigator'],
         caches: ['localStorage'],
+        // Always default to English if no stored preference
+        lookupLocalStorage: 'i18nextLng',
       }
     });
 }

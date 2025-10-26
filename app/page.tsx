@@ -102,7 +102,18 @@ export default function Home() {
     if (!i18n.isInitialized) return;
 
     // Set initial language based on i18n's detected/saved language
-    const initialLang = i18n.language as 'en' | 'es' | 'ar';
+    let initialLang = i18n.language as 'en' | 'es' | 'ar';
+    
+    // Normalize the language code to handle variants like 'en-US' -> 'en'
+    if (initialLang && initialLang.includes('-')) {
+      initialLang = initialLang.split('-')[0] as 'en' | 'es' | 'ar';
+    }
+    
+    // Ensure we only use supported languages, default to English
+    if (!['en', 'es', 'ar'].includes(initialLang)) {
+      initialLang = 'en';
+    }
+    
     console.log('Initial language from i18n:', initialLang, 'Current selectedLanguage:', selectedLanguage);
     
     // Only update if different to avoid unnecessary updates
