@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
+import Filter from 'bad-words';
 
 interface Message {
   id: string;
@@ -495,8 +496,33 @@ export default function Home() {
   }, [selectedLanguage]); // Re-initialize when language changes
 
   const sendMessage = async (messageText?: string, fromVoice: boolean = false) => {
+    // Don't allow sending if already loading
+    if (isLoading) {
+      console.log('Already loading, ignoring request');
+      return;
+    }
+    
     // Use the provided message text or fall back to input state
     const textToSend = messageText || input;
+    
+    // Check for profanity FIRST before any processing
+    if (textToSend && textToSend.trim()) {
+      const filter = new Filter();
+      const hasProfanity = filter.isProfane(textToSend);
+      
+      if (hasProfanity) {
+        console.log('Profanity detected - rejecting immediately');
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: "I'm here to help you with Memphis city services in a respectful and professional manner. Could you please rephrase your question without using inappropriate language?",
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        setInput(''); // Clear the input
+        return; // Exit immediately without processing
+      }
+    }
     
     // Capture isVoiceMode at the start to avoid stale closure issues
     // Also use the fromVoice parameter as a fallback
@@ -515,8 +541,9 @@ export default function Home() {
       voiceMode: voiceMode // Final value used for speaking
     });
     
-    if ((!textToSend.trim() && attachedFiles.length === 0) || isLoading) {
-      console.log('Early return in sendMessage');
+    // Now check if we have content to send
+    if (!textToSend.trim() && attachedFiles.length === 0) {
+      console.log('Early return in sendMessage - no content');
       return;
     }
     
@@ -573,9 +600,21 @@ export default function Home() {
     setIsLoading(true);
 
     try {
+      // Determine the question to send
+      let questionToSend = textToSend.trim();
+      if (!questionToSend && attachedFiles.length > 0) {
+        questionToSend = 'I have shared some files that need to be analyzed. Please help me understand what they contain and how they relate to Memphis city services.';
+      }
+      
+      if (!questionToSend) {
+        console.error('No question or files to send');
+        setIsLoading(false);
+        return;
+      }
+      
       const requestBody = {
         userId,
-        question: textToSend.trim() || (attachedFiles.length > 0 ? 'I have shared some files that need to be analyzed. Please help me understand what they contain and how they relate to Memphis city services.' : ''),
+        question: questionToSend,
         conversationId,
         language: selectedLanguage
       };

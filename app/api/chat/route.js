@@ -20,6 +20,8 @@ export async function POST(request) {
     
       const { userId, question, conversationId, language } = await request.json();
       
+      console.log('Received request:', { userId, question: question?.substring(0, 50), conversationId, language });
+      
       if (!userId) {
         return NextResponse.json(
           { error: 'Missing required field: userId' },
@@ -28,6 +30,7 @@ export async function POST(request) {
       }
       
       if (!question || question.trim().length === 0) {
+        console.log('Question is empty or null');
         return NextResponse.json(
           { error: 'Question cannot be empty' },
           { status: 400 }
