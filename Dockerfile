@@ -7,7 +7,7 @@ EXPOSE 11434
 RUN echo '#!/bin/bash\n\
 ollama serve & \n\
 sleep 10\n\
-ollama pull llama2\n\
+ollama pull llama3\n\
 wait' > /start.sh && chmod +x /start.sh
 
 # Start Ollama server and pull model
