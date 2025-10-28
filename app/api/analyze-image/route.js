@@ -34,9 +34,29 @@ async function analyzeImageWithOllama(image, fileName, context) {
   const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
   
   try {
-    const response = await axios.post(`${ollamaUrl}/api/generate`, {
-      model: 'llava:7b', // Use a vision-capable model
-      prompt: `Analyze this image and provide information relevant to Memphis city services. 
+    // First, verify Ollama is running and model is available
+    try {
+      const healthCheck = await axios.get(`${ollamaUrl}/api/tags`);
+      const models = healthCheck.data.models || [];
+      const hasLlava = models.some(m => m.name.includes('llava'));
+      
+      if (!hasLlava) {
+        console.log('Llava model not found. Available models:', models.map(m => m.name));
+        throw new Error('Vision model not available');
+      }
+    } catch (healthError) {
+      console.log('Ollama health check failed:', healthError.message);
+      throw new Error('Ollama service not available');
+    }
+    
+    // Use the chat endpoint for vision models
+    // LLaVA models use vision encoders (CNNs/ViTs) + language models for multimodal understanding
+    const response = await axios.post(`${ollamaUrl}/api/chat`, {
+      model: process.env.OLLAMA_VISION_MODEL || 'llava:latest',
+      messages: [
+        {
+          role: 'user',
+          content: `Analyze this image and provide information relevant to Memphis city services. 
       
       Image filename: ${fileName}
       Context: ${context || 'General Memphis city services'}
@@ -48,11 +68,13 @@ async function analyzeImageWithOllama(image, fileName, context) {
       4. Next steps they should take
       
       Focus on practical Memphis city service connections.`,
-      images: [image],
+          images: [image]
+        }
+      ],
       stream: false
     });
 
-    const content = response.data.response;
+    const content = response.data.message.content;
     
     // Parse the response and structure it
     return {

@@ -57,8 +57,11 @@ export default function Home() {
   const [voiceCommand, setVoiceCommand] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [showNotifications, setShowNotifications] = useState(true);
+  const [quickAccessCollapsed, setQuickAccessCollapsed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showTrashDropdown, setShowTrashDropdown] = useState(false);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [quickAccessData, setQuickAccessData] = useState<any>(null);
   const [quickAccessLoading, setQuickAccessLoading] = useState(false);
   const [expandedResources, setExpandedResources] = useState<{[key: string]: boolean}>({});
@@ -125,6 +128,29 @@ export default function Home() {
       setSelectedLanguage(initialLang);
     }
   }, [i18n.isInitialized]); // Only run when i18n is initialized
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Don't close if clicking on a dropdown button
+      if (target.closest('button[data-language-toggle]') || 
+          target.closest('div[data-language-selector]') ||
+          target.closest('button[data-trash-toggle]') ||
+          target.closest('button[data-menu-toggle]')) {
+        return;
+      }
+      
+      // Close all dropdowns if clicking outside
+      setShowLanguageDropdown(false);
+      setShowTrashDropdown(false);
+      setShowDropdown(false);
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Language change handler
   const changeLanguage = (lang: 'en' | 'es' | 'ar') => {
@@ -1175,10 +1201,10 @@ export default function Home() {
           </div>
         ) : (
           /* Chat Interface */
-          <div className="bg-white bg-opacity-95 rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300">
             {/* Notification Center */}
             {showNotifications && (
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 px-4 py-3">
+              <div className="bg-gradient-to-r from-yellow-50/80 to-orange-50/80 border-b border-yellow-200 px-4 py-3">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{tFallback('ui.quickAccess')}</h3>
                   <div className="flex items-center space-x-2">
@@ -1186,12 +1212,20 @@ export default function Home() {
                     <div className="relative group z-[99999]">
                       <button 
                         data-language-toggle
-                        onClick={() => !isLoading && setShowLanguageSelector(!showLanguageSelector)}
+                        onClick={() => {
+                          if (!isLoading) {
+                            setShowLanguageDropdown(!showLanguageDropdown);
+                            setShowTrashDropdown(false);
+                            setShowDropdown(false);
+                          }
+                        }}
                         disabled={isLoading}
-                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 flex items-center space-x-1 shadow-md ${
+                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:ring-opacity-50 flex items-center space-x-1 shadow-md ${
                           isLoading 
                             ? 'text-gray-400 cursor-not-allowed opacity-50' 
-                            : 'text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80'
+                            : showLanguageDropdown
+                              ? 'text-white bg-[#00698B]'
+                              : 'text-[#00698B] hover:bg-[#00698B] hover:text-white hover:bg-opacity-80'
                         }`}
                       >
                         {/* Language Icon */}
@@ -1205,18 +1239,18 @@ export default function Home() {
                       </button>
                       
                       {/* Language Dropdown */}
-                      {showLanguageSelector && (
-                        <div data-language-selector className="absolute right-0 top-full mt-2 w-32 bg-white rounded-lg shadow-2xl border-2 border-blue-200 z-[99999]">
+                      {showLanguageDropdown && (
+                        <div data-language-selector className="absolute right-0 top-full mt-2 w-32 bg-white rounded-lg shadow-2xl border-2 border-blue-200 z-[999999]">
                           <div className="p-2">
                             <button
                               onClick={() => {
                                 changeLanguage('en');
-                                setShowLanguageSelector(false);
+                                setShowLanguageDropdown(false);
                               }}
                               className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
                                 selectedLanguage === 'en' 
-                                  ? 'bg-blue-100 text-blue-700' 
-                                  : 'text-gray-700 hover:bg-gray-100'
+                                  ? 'bg-[#00698B]/10 text-[#00698B]' 
+                                  : 'text-[#606060] hover:bg-gray-100'
                               }`}
                             >
                               🇺🇸 English
@@ -1224,12 +1258,12 @@ export default function Home() {
                             <button
                               onClick={() => {
                                 changeLanguage('es');
-                                setShowLanguageSelector(false);
+                                setShowLanguageDropdown(false);
                               }}
                               className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
                                 selectedLanguage === 'es' 
-                                  ? 'bg-blue-100 text-blue-700' 
-                                  : 'text-gray-700 hover:bg-gray-100'
+                                  ? 'bg-[#00698B]/10 text-[#00698B]' 
+                                  : 'text-[#606060] hover:bg-gray-100'
                               }`}
                             >
                               🇪🇸 Español
@@ -1237,12 +1271,12 @@ export default function Home() {
                             <button
                               onClick={() => {
                                 changeLanguage('ar');
-                                setShowLanguageSelector(false);
+                                setShowLanguageDropdown(false);
                               }}
                               className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
                                 selectedLanguage === 'ar' 
-                                  ? 'bg-blue-100 text-blue-700' 
-                                  : 'text-gray-700 hover:bg-gray-100'
+                                  ? 'bg-[#00698B]/10 text-[#00698B]' 
+                                  : 'text-[#606060] hover:bg-gray-100'
                               }`}
                             >
                               🇸🇦 العربية
@@ -1253,13 +1287,22 @@ export default function Home() {
                     </div>
                     
                     {/* Clear Messages Button */}
+                    <div className="relative">
                     <button 
-                      onClick={() => !isLoading && clearMessages()}
+                        onClick={() => {
+                          if (!isLoading) {
+                            setShowTrashDropdown(!showTrashDropdown);
+                            setShowDropdown(false);
+                            setShowLanguageDropdown(false);
+                          }
+                        }}
                       disabled={isLoading}
-                      className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md ${
+                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:ring-opacity-50 shadow-md ${
                         isLoading 
                           ? 'text-gray-400 cursor-not-allowed opacity-50' 
-                          : 'text-blue-600 hover:text-white hover:bg-blue-700 hover:bg-opacity-80'
+                            : showTrashDropdown
+                              ? 'text-white bg-[#00698B]'
+                              : 'text-[#00698B] hover:text-white hover:bg-[#00698B] hover:bg-opacity-80'
                       }`}
                       title={isLoading ? "Please wait while Beale is thinking..." : "Clear messages"}
                     >
@@ -1267,12 +1310,47 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                     </button>
+                      
+                      {/* Trash Dropdown Menu */}
+                      {showTrashDropdown && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-[999999]">
+                          <div className="p-3">
+                            <div className="text-sm text-gray-600 mb-2">Are you sure you want to clear all messages?</div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  clearMessages();
+                                  setShowTrashDropdown(false);
+                                }}
+                                className="flex-1 px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium"
+                              >
+                                Clear
+                              </button>
+                              <button
+                                onClick={() => setShowTrashDropdown(false)}
+                                className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     
                     {/* Three Dots Menu */}
                     <div className="relative">
                       <button 
-                        onClick={() => setShowDropdown(!showDropdown)}
-                        className="text-blue-600 hover:bg-blue-700 hover:text-white hover:bg-opacity-80 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 shadow-md"
+                        onClick={() => {
+                          setShowDropdown(!showDropdown);
+                          setShowTrashDropdown(false);
+                          setShowLanguageDropdown(false);
+                        }}
+                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:ring-opacity-50 shadow-md ${
+                          showDropdown
+                            ? 'text-white bg-[#00698B]'
+                            : 'text-[#00698B] hover:bg-[#00698B] hover:text-white hover:bg-opacity-80'
+                        }`}
                       >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -1281,17 +1359,17 @@ export default function Home() {
                       
                       {/* Dropdown Menu */}
                       {showDropdown && (
-                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999]">
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999999]">
                           <div className="p-4">
                             <div className="font-bold text-lg mb-2 text-blue-600">{tFallback('ui.howToUse')}</div>
                             <div className="font-semibold text-base mb-3 text-gray-800">{tFallback('ui.howToUseMemphis')}</div>
                             <div className="text-sm space-y-2">
                               <div className="flex items-center">
-                                <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
+                                <span className="w-2 h-2 bg-[#00698B] rounded-full mr-3"></span>
                                 <span className="font-medium text-gray-800">211 {tFallback('ui.communityServices')}</span>
                       </div>
                               <div className="flex items-center">
-                                <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                                <span className="w-2 h-2 bg-[#606060] rounded-full mr-3"></span>
                                 <span className="text-gray-800">311 {tFallback('ui.cityServices')}</span>
                               </div>
                               <div className="flex items-center">
@@ -1314,16 +1392,21 @@ export default function Home() {
                       <span>{tFallback('ui.onlineStatus')}</span>
                     </div>
                   <button 
-                    onClick={() => setShowNotifications(false)}
-                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setQuickAccessCollapsed(!quickAccessCollapsed)}
+                    className="p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:ring-opacity-50 text-[#606060] hover:text-[#000] hover:bg-gray-100"
+                    title={quickAccessCollapsed ? "Expand quick access cards" : "Collapse quick access cards"}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg className="w-5 h-5 transition-transform duration-300" style={{ transform: quickAccessCollapsed ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
                 </div>
                 </div>
-                <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-2 md:gap-4">
+                {/* Divider above quick access cards */}
+                {!quickAccessCollapsed && (
+                  <>
+                    <div className="border-t border-gray-300 my-3"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                   {quickAccessLoading ? (
                     <>
                       {/* Skeleton Loader for 211 */}
@@ -1349,71 +1432,88 @@ export default function Home() {
                     <>
                       <a 
                         href={`tel:${quickAccessData?.services?.['211']?.phone || '211'}`}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
-                          quickAccessData?.services?.['211']?.status === 'busy' 
-                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                            : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
-                        }`}
+                        className="flex items-start space-x-3 text-purple-800 transition-all p-2"
                       >
-                        <div className="font-bold tracking-wide text-base md:text-lg">211</div>
-                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.communityServices')}</div>
-                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-purple-600 flex items-center justify-center">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          </div>
+                          <div className="font-bold tracking-wide text-sm md:text-base mt-1">211</div>
+                        </div>
+                        <div className="flex-1 min-w-0 border border-purple-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
+                          <div className="text-sm font-semibold tracking-wide">{tFallback('ui.communityServices')}</div>
+                          <div className="text-xs opacity-70 tracking-wide">
                           {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
                            quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                            quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
+                          </div>
                         </div>
                       </a>
                       <a 
                         href={`tel:${quickAccessData?.services?.['311']?.phone || '901-636-6500'}`}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
-                          quickAccessData?.services?.['311']?.status === 'busy' 
-                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                            : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                        }`}
+                        className="flex items-start space-x-3 text-blue-800 transition-all p-2"
                       >
-                        <div className="font-bold tracking-wide text-base md:text-lg">311</div>
-                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.cityServices')}</div>
-                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-blue-600 flex items-center justify-center">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                          </div>
+                          <div className="font-bold tracking-wide text-sm md:text-base mt-1">311</div>
+                        </div>
+                        <div className="flex-1 min-w-0 border border-blue-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
+                          <div className="text-sm font-semibold tracking-wide">{tFallback('ui.cityServices')}</div>
+                          <div className="text-xs opacity-70 tracking-wide">
                           {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
                            quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                            quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
+                          </div>
                         </div>
                       </a>
                       <a 
                         href={`tel:${quickAccessData?.services?.['911']?.phone || '911'}`}
-                        className={`px-3 py-2 md:px-4 md:py-3 rounded-lg text-center text-sm md:text-base font-medium transition-colors shadow-md ${
-                          quickAccessData?.services?.['911']?.status === 'busy' 
-                            ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' 
-                            : 'bg-red-100 hover:bg-red-200 text-red-800'
-                        }`}
+                        className="flex items-start space-x-3 text-red-800 transition-all p-2"
                       >
-                        <div className="font-bold tracking-wide text-base md:text-lg">911</div>
-                        <div className="text-xs md:text-sm opacity-75 tracking-wide">{tFallback('ui.emergency')}</div>
-                        <div className="text-xs md:text-sm opacity-60 tracking-wide">
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-red-600 flex items-center justify-center">
+                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <div className="font-bold tracking-wide text-sm md:text-base mt-1">911</div>
+                        </div>
+                        <div className="flex-1 min-w-0 border border-red-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
+                          <div className="text-sm font-semibold tracking-wide">{tFallback('ui.emergency')}</div>
+                          <div className="text-xs opacity-70 tracking-wide">
                           {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') : 
                            quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                            quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
+                          </div>
                         </div>
                       </a>
                     </>
                   )}
                 </div>
+                    </>
+                )}
               </div>
             )}
 
             {/* Header */}
-            <div className="px-6 py-2 bg-white bg-opacity-95 backdrop-blur-sm">
-              <div className="flex items-center justify-center">
-                <div className="flex items-center space-x-3">
+            <div className="px-6 py-2 bg-white/80 backdrop-blur-md">
+              <div className="flex items-center justify-center p-1">
+                <div className="flex items-center rounded-2xl shadow-md p-1">
                   <div 
-                    className="w-12 h-12 bg-transparent bg-opacity-20 rounded-full flex items-center justify-center overflow-visible cursor-help relative group"
+                    className="w-12 h-12 rounded-lg p-1 bg-transparent flex items-center justify-center overflow-visible cursor-help relative group"
                     title="Beale - Help and harmony straight from Beale"
                     onMouseEnter={() => console.log('Hovering over avatar')}
                   >
                     <img 
-                      src="/Beale_blue.png" 
+                      src="/beale_blue.png" 
                       alt="Beale Avatar" 
-                      className="w-full h-full object-cover rounded-full"
+                      className="w-full h-full object-cover rounded-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -1441,7 +1541,7 @@ export default function Home() {
             </div>
 
             {/* Messages Area */}
-            <div className="h-96 overflow-y-auto p-6 bg-gray-50">
+            <div className="h-96 overflow-y-auto bg-white/10 sm:p-4 md:p-4 lg:p-6">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-start pt-8 h-full text-center">
                  
@@ -1459,7 +1559,7 @@ export default function Home() {
                   <div className="w-full max-w-sm space-y-2">
                         <button
                       onClick={() => setInput(tFallback('ui.examplePotholeSlider'))}
-                      className="w-full text-left p-3 bg-white hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors text-base text-gray-700 hover:shadow-sm tracking-wide"
+                      className="w-full text-left p-3 bg-white hover:bg-[#00698B]/5 rounded-lg border border-gray-200 hover:border-[#00698B]/30 transition-colors text-base text-[#606060] hover:shadow-sm tracking-wide"
                         >
                       {tFallback('ui.examplePotholeSlider')}
                         </button>
@@ -1471,17 +1571,17 @@ export default function Home() {
                     <div
                       key={message.id}
                       data-message-id={message.id}
-                      className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} ${
+                      className={`flex ${message.role === 'user' ? 'flex-row-reverse items-end' : 'flex-row items-start'} gap-2 mb-6 ml-1 mr-1 ${
                         message.role === 'assistant' ? 'animate-fade-in-slow' : ''
                       }`}
                     >
-                      {/* Avatar - positioned at top */}
+                      {/* Avatar */}
                       {message.role === 'assistant' ? (
-                        <div className="w-8 h-8 mb-2 flex-shrink-0">
+                        <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                           <img 
-                            src="/Beale_blue.png" 
+                            src="/beale_blue.png" 
                             alt="Beale Avatar" 
-                            className="w-full h-full object-cover rounded-full"
+                            className="w-full h-full object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -1489,23 +1589,25 @@ export default function Home() {
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-8 mb-2 flex-shrink-0">
-                          <div className="w-full h-full bg-purple-200 rounded-full flex items-center justify-center px-2">
-                            <span className="text-purple-800 text-xs font-medium">User</span>
-                          </div>
+                        <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full bg-gray-600 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
                         </div>
                       )}
                       
                       {/* Message bubble */}
                       <div
-                        className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg ${
+                        className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg mr-8 md:mr-0 ${
                           message.role === 'user'
-                            ? 'bg-purple-200 text-purple-800 rounded-br-md hover:bg-purple-200'
-                            : 'bg-blue-100 text-blue-800 rounded-bl-md border border-gray-200 hover:border-gray-300'
+                            ? 'bg-blue-100 text-[#00698B] rounded-br-none'
+                            : 'bg-white text-[#000] border border-gray-200 hover:border-gray-300 rounded-bl-none'
                         }`}
                         style={{ zIndex: message.role === 'assistant' ? 1 : 'auto' }}
                       >
-                        <div className="markdown-content tracking-wide">
+                        <div className={`markdown-content tracking-wide ${
+                          message.role === 'user' ? 'text-[#00698B] [&_*]:text-[#00698B] [&_p]:text-[#00698B] [&_strong]:text-[#00698B] [&_em]:text-[#00698B] [&_a]:text-[#00698B]' : 'text-gray-800'
+                        }`}>
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             rehypePlugins={[rehypeRaw, rehypeHighlight]}
@@ -1723,11 +1825,11 @@ export default function Home() {
                         )}
                         
                         {isClient && (
-                          <div className="mt-2 flex justify-end">
-                            <span className={`text-xs px-2 py-1 rounded-full ${
+                          <div className="mt-2">
+                            <span className={`text-xs ${
                               message.role === 'user' 
-                                ? 'bg-purple-300 text-purple-800' 
-                                : 'bg-blue-200 text-blue-700'
+                                ? 'text-[#00698B] opacity-80' 
+                                : 'text-gray-500'
                             }`}>
                               {formattedTimes[message.id] || '...'}
                             </span>
@@ -1737,19 +1839,19 @@ export default function Home() {
                     </div>
                   ))}
                   {isLoading && !conversationEnded && (
-                    <div className="flex justify-start">
-                      <div className="w-8 h-8 mr-2 flex-shrink-0">
+                    <div className="flex flex-row items-start gap-2 mb-4 ml-1 mr-1">
+                      <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                         <img 
-                          src="/Beale_blue.png" 
+                          src="/beale_blue.png" 
                           alt="Beale Avatar" 
-                          className="w-full h-full object-cover rounded-full"
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
                           }}
                         />
                       </div>
-                      <div className="bg-white text-gray-900 max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl rounded-bl-md border border-gray-200 animate-pulse-glow">
+                      <div className="bg-white text-gray-900 max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-lg rounded-bl-none border border-gray-200 animate-pulse-glow shadow-md">
                         <div className="flex items-center space-x-3">
                           <div className="flex space-x-1">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
@@ -1767,7 +1869,7 @@ export default function Home() {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-gray-200 p-4 bg-white bg-opacity-95 shadow-sm">
+            <div className="border-t border-gray-200 p-4 bg-white/90 backdrop-blur-md shadow-sm">
               <div className="flex space-x-3">
                 <div className="flex-1 relative">
                   <input
@@ -1776,7 +1878,7 @@ export default function Home() {
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     placeholder={conversationEnded ? "Conversation ended" : tFallback('ui.enterMessage')}
-                    className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-500"
+                    className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:border-transparent bg-white text-[#000] placeholder-[#606060]"
                     disabled={isLoading || conversationEnded}
                   />
                   
@@ -1910,7 +2012,7 @@ export default function Home() {
                         <span className="text-sm text-gray-700 tracking-wide">{file.name}</span>
                         <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
                         {loadingImages.has(file.name) && (
-                          <span className="text-xs text-blue-600 font-medium">Loading...</span>
+                          <span className="text-xs text-[#00698B] font-medium">Loading...</span>
                         )}
                       </div>
                       <button
@@ -1956,7 +2058,7 @@ export default function Home() {
           </div>
 
           {/* Footer */}
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+            <div className="bg-gray-50/80 backdrop-blur-sm px-6 py-3 border-t border-gray-200">
               <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
                 <span>{tFallback('ui.poweredBy')}</span>
                 <div className="flex items-center space-x-1">
