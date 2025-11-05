@@ -1,39 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, initializeDatabase } from '../../../lib/db.js';
 import { processQuestion, getEmbedding } from '../../../lib/ai.js';
-import { sendMemphisResponse, sendSMS } from '../../../lib/sms.js';
+import { sendMemphisResponse, sendSMS, getTwilioStatus } from '../../../lib/sms.js';
 import twilio from 'twilio';
 import Filter from 'bad-words';
 
 /**
  * GET /api/sms
- * Test SMS functionality with Twilio test phone numbers
+ * Test SMS functionality and get Twilio status
  */
 export async function GET(request) {
   const url = new URL(request.url);
   const mockMode = url.searchParams.get('mock') === 'true' || process.env.TWILIO_MOCK_MODE === 'true';
+  const checkStatus = url.searchParams.get('status') === 'true';
+  
+  // If checking status only
+  if (checkStatus) {
+    const status = getTwilioStatus();
+    return NextResponse.json({
+      success: true,
+      status: status
+    });
+  }
   
   // Check if we should use mock mode (when explicitly enabled)
   if (mockMode) {
     console.log('Using mock mode for SMS testing');
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       sid: 'mock_' + Date.now(),
       message: 'Mock SMS test successful',
       to: process.env.TWILIO_TEST_PHONE_NUMBER || '+15005550006',
       from: process.env.TWILIO_PHONE_NUMBER || '+15005550006',
-      note: 'MOCK MODE - No actual SMS sent. Set TWILIO_MOCK_MODE=false and configure valid Twilio credentials for real testing.'
+      note: 'MOCK MODE - No actual SMS sent. Configure valid Twilio credentials for real testing.',
+      status: getTwilioStatus()
     });
   }
 
   try {
+    const status = getTwilioStatus();
+    
+    // Auto-detect if we should use mock mode based on configuration
+    if (!status.configured) {
+      console.log('Auto-switching to mock mode due to invalid Twilio configuration');
+      return NextResponse.json({
+        success: true,
+        sid: 'auto_mock_' + Date.now(),
+        message: 'Auto mock SMS test - Twilio not properly configured',
+        to: process.env.TWILIO_TEST_PHONE_NUMBER || '+15005550006',
+        from: process.env.TWILIO_PHONE_NUMBER || '+15005550006',
+        note: 'AUTO MOCK MODE - No valid Twilio configuration found. Using mock data for testing.',
+        status: status,
+        autoMock: true
+      });
+    }
+
     const client = twilio(
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_AUTH_TOKEN
     );
 
     // Use Twilio test phone numbers for testing
-    // If TWILIO_PHONE_NUMBER is a test number, use a different test number for 'to'
     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
     const toNumber = process.env.TWILIO_TEST_PHONE_NUMBER || '+15551234567';
     
@@ -43,16 +70,20 @@ export async function GET(request) {
       to: toNumber,
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       sid: testMessage.sid,
       message: 'Test SMS sent successfully',
       to: toNumber,
       from: fromNumber,
-      note: 'Using Twilio test numbers - no actual SMS sent'
+      note: 'Using Twilio test numbers - no actual SMS sent',
+      status: status
     });
   } catch (error) {
     console.error('Test SMS error:', error);
+    
+    // If Twilio fails, fall back to providing status and mock mode info
+    const status = getTwilioStatus();
     
     let errorMessage = error.message;
     let details = 'Make sure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER are set in your environment variables';
@@ -65,13 +96,15 @@ export async function GET(request) {
       details = 'The phone number you\'re sending from cannot be the same as the number you\'re sending to.';
     }
     
-    return NextResponse.json({ 
-      success: false, 
+    return NextResponse.json({
+      success: false,
       error: errorMessage,
       details: details,
       twilioErrorCode: error.code,
       currentFromNumber: process.env.TWILIO_PHONE_NUMBER,
-      currentToNumber: process.env.TWILIO_TEST_PHONE_NUMBER || '+15005550006'
+      currentToNumber: process.env.TWILIO_TEST_PHONE_NUMBER || '+15005550006',
+      status: status,
+      suggestion: 'Consider using mock mode for testing: /api/sms?mock=true or configure valid Twilio credentials'
     }, { status: 500 });
   }
 }

@@ -15,6 +15,12 @@
     "test-sms": "node scripts/testSMS.js",
     "test-sms:basic": "node scripts/testSMS.js basic",
     "test-sms:scenarios": "node scripts/testSMS.js advanced --scenario=pothole && node scripts/testSMS.js advanced --scenario=emergency && node scripts/testSMS.js advanced --scenario=community",
+    "test-sms:mock": "echo '📱 Testing SMS Mock API...' && curl http://localhost:3000/api/sms && echo -e '\n\n📊 Checking Twilio Status...' && curl 'http://localhost:3000/api/sms?status=true'",
+    "test-sms:mock-ai": "TWILIO_MOCK_MODE=true node scripts/testSMS.js ai",
+    "test-sms:mock-pothole": "TWILIO_MOCK_MODE=true node scripts/testSMS.js ai --message=\"There is a large pothole on Main Street\" --scenario=pothole",
+    "test-sms:mock-emergency": "TWILIO_MOCK_MODE=true node scripts/testSMS.js ai --message=\"There is a water main break flooding the street\" --scenario=emergency",
+    "test-sms:mock-community": "TWILIO_MOCK_MODE=true node scripts/testSMS.js ai --message=\"I need help finding food assistance programs\" --scenario=community",
+    "test-sms:mock-custom": "TWILIO_MOCK_MODE=true node scripts/testSMS.js ai --message=\"I need help with trash pickup\" --scenario=custom",
     "test-sms:pothole": "node scripts/testSMS.js advanced --scenario=pothole",
     "test-sms:emergency": "node scripts/testSMS.js advanced --scenario=emergency",
     "test-sms:community": "node scripts/testSMS.js advanced --scenario=community",
@@ -29,6 +35,7 @@
     "test-performance": "node test-performance.js"
   },
   "dependencies": {
+    "@huggingface/inference": "^4.13.0",
     "axios": "^1.6.2",
     "bad-words": "^3.0.4",
     "cheerio": "^1.0.0-rc.12",

@@ -135,10 +135,11 @@ export default function Home() {
       const target = event.target as HTMLElement;
       
       // Don't close if clicking on a dropdown button
-      if (target.closest('button[data-language-toggle]') || 
+      if (target.closest('button[data-language-toggle]') ||
           target.closest('div[data-language-selector]') ||
           target.closest('button[data-trash-toggle]') ||
-          target.closest('button[data-menu-toggle]')) {
+          target.closest('button[data-menu-toggle]') ||
+          target.closest('div[data-three-dots-dropdown]')) {
         return;
       }
       
@@ -184,56 +185,134 @@ export default function Home() {
     const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.text.trim();
     
     if (!lastUserMessage) {
-      return tFallback('ui.bealeThinking');
+      return selectedLanguage === 'es' ? 'Beale está preparando algo genial...' :
+             selectedLanguage === 'ar' ? 'بيل يستعد لعمل شيء رائع...' :
+             "Beale's getting ready to help...";
     }
 
-    // Get first few words from the message
-    const firstWords = lastUserMessage.toLowerCase().split(' ').slice(0, 3).join(' ');
-    
-    // Map specific opening patterns to thinking messages
+    // Beale's personality: helpful, professional, knowledgeable
     const thinkingMessages: {[key: string]: string} = {
-      'hello': selectedLanguage === 'es' ? 'Hola! Permíteme pensar en eso...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر في ذلك...' : "Hey there! Let me think about that...",
-      'hi': selectedLanguage === 'es' ? 'Hola! Permíteme pensar...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر...' : "Hi! Let me think...",
-      'hey': selectedLanguage === 'es' ? '¡Hey! Déjame pensar...' : selectedLanguage === 'ar' ? 'مرحباً! دعني أفكر...' : "Hey! Let me think...",
-      'i need': selectedLanguage === 'es' ? 'Claro, déjame ayudarte con eso...' : selectedLanguage === 'ar' ? 'طبعاً، دعني أساعدك في ذلك...' : "Of course, let me help you with that...",
-      'i want': selectedLanguage === 'es' ? 'Entiendo, déjame ayudarte...' : selectedLanguage === 'ar' ? 'أفهم، دعني أساعدك...' : "I understand, let me help you...",
-      'can you': selectedLanguage === 'es' ? 'Por supuesto, déjame ver...' : selectedLanguage === 'ar' ? 'بالطبع، دعني أرى...' : "Of course, let me check...",
-      'help me': selectedLanguage === 'es' ? 'Por supuesto, déjame ayudarte...' : selectedLanguage === 'ar' ? 'بالطبع، دعني أساعدك...' : "Of course, let me help you...",
-      'how do': selectedLanguage === 'es' ? 'Déjame explicarte cómo...' : selectedLanguage === 'ar' ? 'دعني أشرح لك كيف...' : "Let me explain how...",
-      'what': selectedLanguage === 'es' ? 'Déjame buscar esa información...' : selectedLanguage === 'ar' ? 'دعني أبحث عن تلك المعلومات...' : "Let me find that information...",
-      'where': selectedLanguage === 'es' ? 'Déjame buscar esa ubicación...' : selectedLanguage === 'ar' ? 'دعني أبحث عن ذلك الموقع...' : "Let me find that location...",
-      'when': selectedLanguage === 'es' ? 'Déjame verificar el horario...' : selectedLanguage === 'ar' ? 'دعني أتحقق من الجدول الزمني...' : "Let me check the schedule...",
-      'thank': selectedLanguage === 'es' ? 'De nada! Déjame ver qué puedo hacer...' : selectedLanguage === 'ar' ? 'على الرحب! دعني أرى ماذا يمكنني أن أفعل...' : "You're welcome! Let me see what I can do...",
-      'report': selectedLanguage === 'es' ? 'Claro, déjame guiarte...' : selectedLanguage === 'ar' ? 'طبعاً، دعني أرشدك...' : "Of course, let me guide you...",
-      'there is': selectedLanguage === 'es' ? 'Entiendo, déjame ayudarte a reportar esto...' : selectedLanguage === 'ar' ? 'أفهم، دعني أساعدك على الإبلاغ عن ذلك...' : "I understand, let me help you report this...",
+      // Greetings
+      'hello': selectedLanguage === 'es' ? 'Hola, estoy revisando tu mensaje...' :
+               selectedLanguage === 'ar' ? 'مرحباً، أراجع رسالتك...' :
+               "Hello, I'm reviewing your message...",
+      'hi': selectedLanguage === 'es' ? 'Hola, revisando tu pregunta...' :
+            selectedLanguage === 'ar' ? 'مرحباً، أراجع سؤالك...' :
+            "Hi, reviewing your question...",
+      'hey': selectedLanguage === 'es' ? 'Hola, revisando tu consulta...' :
+             selectedLanguage === 'ar' ? 'مرحباً، أراجع استفسارك...' :
+             "Hey, reviewing your inquiry...",
+      
+      // Assistance requests
+      'i need': selectedLanguage === 'es' ? 'Entiendo, voy a buscar la información...' :
+                selectedLanguage === 'ar' ? 'أفهم، سأبحث عن المعلومات...' :
+                "I understand, let me find that information...",
+      'i want': selectedLanguage === 'es' ? 'Perfecto, voy a ayudarte...' :
+                selectedLanguage === 'ar' ? 'ممتاز، سأساعدك...' :
+                "Perfect, let me help you with that...",
+      'can you': selectedLanguage === 'es' ? 'Por supuesto, voy a revisar...' :
+                 selectedLanguage === 'ar' ? 'بالطبع، سأراجع...' :
+                 "Of course, let me check that...",
+      'help me': selectedLanguage === 'es' ? 'Voy a ayudarte ahora...' :
+                 selectedLanguage === 'ar' ? 'سأساعدك الآن...' :
+                 "Let me help you with that...",
+      
+      // Information requests
+      'how do': selectedLanguage === 'es' ? 'Voy a explicarte el proceso...' :
+                selectedLanguage === 'ar' ? 'سأشرح لك العملية...' :
+                "Let me explain the process...",
+      'what': selectedLanguage === 'es' ? 'Buscando esa información...' :
+              selectedLanguage === 'ar' ? 'أبحث عن تلك المعلومات...' :
+              "Looking up that information...",
+      'where': selectedLanguage === 'es' ? 'Encontrando la ubicación...' :
+               selectedLanguage === 'ar' ? 'أجد الموقع...' :
+               "Finding that location...",
+      'when': selectedLanguage === 'es' ? 'Verificando los horarios...' :
+              selectedLanguage === 'ar' ? 'أتحقق من المواعيد...' :
+              "Checking the schedule...",
+      'why': selectedLanguage === 'es' ? 'Voy a explicarte el porqué...' :
+             selectedLanguage === 'ar' ? 'سأشرح السبب...' :
+             "Let me explain the reason...",
+      
+      // Gratitude
+      'thank': selectedLanguage === 'es' ? 'De nada, ¿algo más en lo que pueda ayudar?' :
+               selectedLanguage === 'ar' ? 'على الرحب، هل يمكنني مساعدتك في شيء آخر؟' :
+               "You're welcome, anything else I can help with?",
+      
+      // Reporting
+      'report': selectedLanguage === 'es' ? 'Te ayudo con el reporte...' :
+                selectedLanguage === 'ar' ? 'أساعدك في الإبلاغ...' :
+                "I'll help you with the reporting...",
+      'there is': selectedLanguage === 'es' ? 'Entiendo, voy a ayudar con eso...' :
+                  selectedLanguage === 'ar' ? 'أفهم، سأساعد في ذلك...' :
+                  "I understand, let me help with that...",
+      
+      // Emergency
+      'emergency': selectedLanguage === 'es' ? 'Emergencia detectada, voy a responder inmediatamente...' :
+                   selectedLanguage === 'ar' ? 'تم اكتشاف طوارئ، سأرد فوراً...' :
+                   "Emergency detected, responding immediately...",
+      'urgent': selectedLanguage === 'es' ? 'Entendido, voy a atender esto con prioridad...' :
+                selectedLanguage === 'ar' ? 'فهمت، سأعالج هذا بأولوية...' :
+                "Understood, addressing this with priority...",
+      
+      // Problems
+      'problem': selectedLanguage === 'es' ? 'No te preocupes, voy a resolver esto...' :
+                 selectedLanguage === 'ar' ? 'لا تقلق، سأحل هذا...' :
+                 "No worries, let me resolve this...",
+      'issue': selectedLanguage === 'es' ? 'Voy a identificar y resolver el problema...' :
+               selectedLanguage === 'ar' ? 'سأحدد وأحل المشكلة...' :
+               "Let me identify and resolve this issue...",
     };
 
     // Check for specific patterns first (full message)
     const fullMessageLower = lastUserMessage.toLowerCase();
+    
+    // Check for emergency patterns first
+    if (fullMessageLower.includes('emergency') || fullMessageLower.includes('urgent')) {
+      return thinkingMessages['emergency'];
+    }
+    
+    // Check for problem/issue patterns
+    if (fullMessageLower.includes('problem') || fullMessageLower.includes('issue')) {
+      return thinkingMessages['problem'];
+    }
+    
+    // Check other patterns
     for (const [pattern, message] of Object.entries(thinkingMessages)) {
       if (fullMessageLower.includes(pattern)) {
         return message;
       }
     }
 
-    // Generate dynamic message based on first few words
-    const words = lastUserMessage.split(' ').slice(0, 3);
+    // Generate dynamic message based on first few words with personality
+    const words = lastUserMessage.split(' ').slice(0, 2);
     const firstWord = words[0].toLowerCase();
     
+    // Question words get Beale\'s analytical personality
     if (firstWord === 'how' || firstWord === 'what' || firstWord === 'where' || firstWord === 'when' || firstWord === 'why') {
-      return selectedLanguage === 'es' 
-        ? `Déjame pensar en "${words.join(' ')}"...` 
-        : selectedLanguage === 'ar' 
-          ? `دعني أفكر في "${words.join(' ')}"...`
-          : `Let me think about "${words.join(' ')}"...`;
+      return selectedLanguage === 'es'
+        ? `Beale analiza "${words.join(' ')}" 🎯`
+        : selectedLanguage === 'ar'
+          ? `بيل يحلل "${words.join(' ')}" 🎯`
+          : `Beale\'s analyzing "${words.join(' ')}" 🎯`;
     }
 
-    // Default dynamic message with first few words
-    return selectedLanguage === 'es'
-      ? `Vale, déjame pensar sobre "${words.join(' ')}"...`
-      : selectedLanguage === 'ar'
-        ? `حسناً، دعني أفكر في "${words.join(' ')}"...`
-        : `Alright, let me think about "${words.join(' ')}"...`;
+    // Default professional message
+    const defaultMessages = [
+      selectedLanguage === 'es' ? 'Estoy revisando la información...' :
+      selectedLanguage === 'ar' ? 'أراجع المعلومات...' :
+      'I\'m reviewing the information...',
+      
+      selectedLanguage === 'es' ? 'Buscando en la base de conocimiento...' :
+      selectedLanguage === 'ar' ? 'أبحث في قاعدة المعرفة...' :
+      'Searching the knowledge base...',
+      
+      selectedLanguage === 'es' ? 'Preparando una respuesta...' :
+      selectedLanguage === 'ar' ? 'أجهز الرد...' :
+      'Preparing a response...',
+    ];
+    
+    return defaultMessages[Math.floor(Math.random() * defaultMessages.length)];
   };
 
   // Close dropdown when clicking outside
@@ -428,7 +507,7 @@ export default function Home() {
           // Handle attachment command
           if (isAttachmentCommand) {
             setIsListening(false);
-            setVoiceCommand('Opening file picker...');
+            setVoiceCommand('Opening file explorer... 📁');
             setInput(''); // Clear any text
             setTimeout(() => {
               triggerFileInput();
@@ -440,7 +519,7 @@ export default function Home() {
           // Handle emoji command
           if (isEmojiCommand) {
             setIsListening(false);
-            setVoiceCommand('Opening emoji picker...');
+            setVoiceCommand('Opening emoji selection... 😊');
             setInput(''); // Clear any text
             setTimeout(() => {
               setShowEmojiPicker(true);
@@ -452,7 +531,7 @@ export default function Home() {
           // Handle send command
           if (isSendCommand) {
             console.log('Processing send command...');
-            setVoiceCommand('Sending...');
+            setVoiceCommand('Sending your message... 💬');
             
             // Extract text before the send command
             const cleanedText = transcript
@@ -852,8 +931,8 @@ export default function Home() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const startListening = () => {
-    console.log('startListening called', {
+  const toggleListening = async () => {
+    console.log('toggleListening called', {
       hasRecognition: !!recognitionRef.current,
       isListening,
       isLoading,
@@ -865,26 +944,37 @@ export default function Home() {
       return;
     }
     
-    if (isListening) {
-      console.log('Already listening, stopping...');
-      recognitionRef.current.stop();
-      return;
-    }
-    
     if (isLoading) {
-      console.log('Currently loading, cannot start');
+      console.log('Currently loading, cannot toggle');
       return;
     }
     
-    try {
-      console.log('Attempting to start recognition...');
-      setIsVoiceMode(true);
-      recognitionRef.current.start();
-      console.log('Recognition started successfully');
-    } catch (error) {
-      console.error('Error starting speech recognition:', error);
-      // If it's already started, just update the UI state
-      setIsListening(true);
+    if (isListening) {
+      console.log('Currently listening, stopping...');
+      try {
+        recognitionRef.current.stop();
+        // Give the browser a moment to process the stop
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setIsListening(false);
+        setIsVoiceMode(false);
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+        // Force reset state if stop fails
+        setIsListening(false);
+        setIsVoiceMode(false);
+      }
+    } else {
+      console.log('Not listening, starting...');
+      try {
+        setIsVoiceMode(true);
+        recognitionRef.current.start();
+        console.log('Recognition started successfully');
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        // Reset states on error
+        setIsListening(false);
+        setIsVoiceMode(false);
+      }
     }
   };
 
@@ -893,9 +983,32 @@ export default function Home() {
     // Don't reset voice mode on typing - it should persist until message is sent
   };
 
+  const startListening = () => {
+    if (!isListening && !isLoading) {
+      console.log('Direct startListening call');
+      setIsVoiceMode(true);
+      try {
+        recognitionRef.current?.start();
+      } catch (error) {
+        console.error('Error in direct startListening:', error);
+        setIsListening(false);
+        setIsVoiceMode(false);
+      }
+    }
+  };
+
   const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
+    if (isListening) {
+      console.log('Direct stopListening call');
+      try {
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        setIsVoiceMode(false);
+      } catch (error) {
+        console.error('Error in direct stopListening:', error);
+        setIsListening(false);
+        setIsVoiceMode(false);
+      }
     }
   };
 
@@ -907,8 +1020,70 @@ export default function Home() {
   };
 
   const clearMessages = () => {
-    setMessages([]);
-    setConversationId(null);
+    console.log('Starting clearMessages process...');
+    
+    try {
+      // First, stop all active processes immediately
+      console.log('Stopping speech recognition...');
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.log('Error stopping recognition during clear:', error);
+        }
+      }
+      
+      console.log('Stopping speech synthesis...');
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (error) {
+          console.log('Error stopping speech synthesis during clear:', error);
+        }
+      }
+      
+      // Clear messages and conversation state, but keep chat interface open
+      setMessages([]); // Clear message history
+      setConversationId(null); // Start new conversation
+      setInput(''); // Clear input field
+      setAttachedFiles([]); // Clear attached files
+      setFilePreviews({}); // Clear file previews
+      setLoadingImages(new Set()); // Clear loading states
+      setImageLoadingStates({}); // Clear image states
+      setAnalyzingImage(null); // Clear image analysis state
+      setIsListening(false); // Stop listening if active
+      setIsVoiceMode(false); // Reset voice mode
+      setIsSpeaking(false); // Stop speaking
+      setVoiceCommand(null); // Clear voice commands
+      setIsLoading(false); // Stop loading state
+      setInappropriateMessageCount(0); // Reset counter
+      setConversationEnded(false); // Reset conversation ended state
+      
+      // Close any open dropdowns
+      setShowTrashDropdown(false);
+      setShowDropdown(false);
+      setShowLanguageDropdown(false);
+      setShowMenu(false);
+      
+      // Reset emoji picker and image modal if open
+      setShowEmojiPicker(false);
+      setShowImageModal(false);
+      
+      // Clear expanded resources state
+      setExpandedResources({});
+      
+      console.log('ClearMessages completed - ready for fresh conversation');
+      
+    } catch (error) {
+      console.error('Error during clearMessages:', error);
+      // Even if there's an error, try to clear main states
+      setMessages([]);
+      setConversationId(null);
+      setInput('');
+      setIsListening(false);
+      setIsVoiceMode(false);
+      setIsSpeaking(false);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1090,11 +1265,11 @@ export default function Home() {
 
       const analysis = await response.json();
       
-      // Add analysis as a message from Memphis Maven
+      // Add analysis as a message from Beale
       const analysisMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        text: `🔍 **Image Analysis for ${fileName}**\n\n${analysis.analysis}\n\n**Recommendations:**\n${analysis.recommendations}\n\n**Next Steps:**\n${analysis.nextSteps}`,
+        text: `I've analyzed your image "${fileName}".\n\n${analysis.analysis}\n\n**Recommendations:**\n${analysis.recommendations}\n\n**Next steps:**\n${analysis.nextSteps}\n\nLet me know if you need help with anything else.`,
         timestamp: new Date().toISOString(),
         images: analysis.relatedImages || []
       };
@@ -1118,19 +1293,8 @@ export default function Home() {
     }
   };
 
-  // Close emoji picker when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showEmojiPicker && !(event.target as Element).closest('.emoji-picker')) {
-        setShowEmojiPicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showEmojiPicker]);
+  // Remove automatic emoji picker closing - it's now a toggle
+  // Users can click the emoji button again to close it
 
   // Debug attached files
   useEffect(() => {
@@ -1181,11 +1345,13 @@ export default function Home() {
           /* Initial Greeting Screen */
           <div className="bg-transparent overflow-hidden">
             {/* Beale Sunset Image */}
-            <div className="flex justify-center p-6">
-              <img 
-                src="/beale_no_background_sunset.png" 
-                alt="Beale" 
-                className="w-full max-w-sm h-auto object-contain"
+            <div className="flex justify-center p-6 relative w-full max-w-sm h-auto">
+              <Image
+                src="/beale_no_background_sunset.png"
+                alt="Beale"
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 400px"
               />
                     </div>
                     
@@ -1202,11 +1368,47 @@ export default function Home() {
         ) : (
           /* Chat Interface */
           <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden transition-all duration-300">
+            <div className="px-6 py-2 bg-transparent border-b border-gray-300 h-36">
+              <div className="flex items-center justify-center p-1">
+                <div className="flex flex-col items-center justify-center p-1 w-42 h-42">
+                  <div 
+                    className="w-full h-full rounded-lg p-1 bg-transparent overflow-visible cursor-help relative group"
+                    title="Beale - Help and harmony straight from Beale"
+                    onMouseEnter={() => console.log('Hovering over avatar')}
+                  >
+                    <img 
+                      src="/beale_blue.png" 
+                      alt="Beale Avatar" 
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        // Try SVG fallback
+                        const fallback = target.parentElement?.querySelector('.fallback-svg') as HTMLImageElement;
+                        if (fallback) {
+                          fallback.style.display = 'block';
+                        } else {
+                          // Ultimate fallback to letter
+                          const letterFallback = target.parentElement?.querySelector('.letter-fallback') as HTMLElement;
+                          if (letterFallback) {
+                            letterFallback.classList.remove('hidden');
+                            letterFallback.classList.add('flex');
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-gray-900 font-bold text-4xl tracking-wide pt-[-30px]">Beale</h2>
+                  </div>
+                </div>
+              </div>
+            </div>
             {/* Notification Center */}
             {showNotifications && (
               <div className="bg-gradient-to-r from-yellow-50/80 to-orange-50/80 border-b border-yellow-200 px-4 py-3">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-800 tracking-wide">{tFallback('ui.quickAccess')}</h3>
+                <div className="flex items-center flex-wrap justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-800 tracking-wide sm:mb-1">{tFallback('ui.quickAccess')}</h3>
                   <div className="flex items-center space-x-2">
                     {/* Language Selector */}
                     <div className="relative group z-[99999]">
@@ -1286,62 +1488,29 @@ export default function Home() {
                       )}
                     </div>
                     
-                    {/* Clear Messages Button */}
-                    <div className="relative">
-                    <button 
-                        onClick={() => {
-                          if (!isLoading) {
-                            setShowTrashDropdown(!showTrashDropdown);
-                            setShowDropdown(false);
-                            setShowLanguageDropdown(false);
-                          }
-                        }}
-                      disabled={isLoading}
-                        className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#00698B] focus:ring-opacity-50 shadow-md ${
-                        isLoading 
-                          ? 'text-gray-400 cursor-not-allowed opacity-50' 
-                            : showTrashDropdown
-                              ? 'text-white bg-[#00698B]'
-                              : 'text-[#00698B] hover:text-white hover:bg-[#00698B] hover:bg-opacity-80'
-                      }`}
-                      title={isLoading ? "Please wait while Beale is thinking..." : "Clear messages"}
+                    {/* Clear Button - Moved outside dropdown */}
+                    <button
+                      onClick={() => {
+                        console.log('Clear button clicked!');
+                        console.log('Current messages:', messages.length);
+                        clearMessages();
+                      }}
+                      className="p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 text-red-600 hover:text-red-700 hover:bg-red-50 shadow-md"
+                      title="Clear all messages and start fresh"
                     >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                      </svg>
                     </button>
-                      
-                      {/* Trash Dropdown Menu */}
-                      {showTrashDropdown && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-[999999]">
-                          <div className="p-3">
-                            <div className="text-sm text-gray-600 mb-2">Are you sure you want to clear all messages?</div>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => {
-                                  clearMessages();
-                                  setShowTrashDropdown(false);
-                                }}
-                                className="flex-1 px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm font-medium"
-                              >
-                                Clear
-                              </button>
-                              <button
-                                onClick={() => setShowTrashDropdown(false)}
-                                className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
+
                     {/* Three Dots Menu */}
                     <div className="relative">
-                      <button 
-                        onClick={() => {
+                      <button
+                        data-menu-toggle
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Three dots clicked, current showDropdown:', showDropdown);
                           setShowDropdown(!showDropdown);
                           setShowTrashDropdown(false);
                           setShowLanguageDropdown(false);
@@ -1359,11 +1528,11 @@ export default function Home() {
                       
                       {/* Dropdown Menu */}
                       {showDropdown && (
-                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999999]">
+                        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999999]" style={{ pointerEvents: 'auto' }}>
                           <div className="p-4">
                             <div className="font-bold text-lg mb-2 text-blue-600">{tFallback('ui.howToUse')}</div>
                             <div className="font-semibold text-base mb-3 text-gray-800">{tFallback('ui.howToUseMemphis')}</div>
-                            <div className="text-sm space-y-2">
+                            <div className="text-sm space-y-2 mb-4">
                               <div className="flex items-center">
                                 <span className="w-2 h-2 bg-[#00698B] rounded-full mr-3"></span>
                                 <span className="font-medium text-gray-800">211 {tFallback('ui.communityServices')}</span>
@@ -1501,35 +1670,21 @@ export default function Home() {
               </div>
             )}
 
-            {/* Header */}
-            <div className="px-6 py-2 bg-white/80 backdrop-blur-md">
-              <div className="flex items-center justify-center p-1">
+          
+            <div className="px-6 py-2 bg-white/80 backdrop-blur-md h-8">
+              {/* <div className="flex items-center justify-center p-1">
                 <div className="flex items-center rounded-2xl shadow-md p-1">
-                  <div 
+                  <div
                     className="w-12 h-12 rounded-lg p-1 bg-transparent flex items-center justify-center overflow-visible cursor-help relative group"
                     title="Beale - Help and harmony straight from Beale"
                     onMouseEnter={() => console.log('Hovering over avatar')}
                   >
-                    <img 
-                      src="/beale_blue.png" 
-                      alt="Beale Avatar" 
-                      className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        // Try SVG fallback
-                        const fallback = target.parentElement?.querySelector('.fallback-svg') as HTMLImageElement;
-                        if (fallback) {
-                          fallback.style.display = 'block';
-                        } else {
-                          // Ultimate fallback to letter
-                          const letterFallback = target.parentElement?.querySelector('.letter-fallback') as HTMLElement;
-                          if (letterFallback) {
-                            letterFallback.classList.remove('hidden');
-                            letterFallback.classList.add('flex');
-                          }
-                        }
-                      }}
+                    <Image
+                      src="/beale_blue.png"
+                      alt="Beale Avatar"
+                      fill
+                      className="object-cover rounded-lg"
+                      sizes="48px"
                     />
                   </div>
                   
@@ -1537,13 +1692,13 @@ export default function Home() {
                     <h2 className="text-gray-900 font-bold text-xl tracking-wide">Beale</h2>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Messages Area */}
             <div className="h-96 overflow-y-auto bg-white/10 sm:p-4 md:p-4 lg:p-6">
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-start pt-8 h-full text-center">
+                <div className="flex flex-col items-center justify-start pt-8 h-full text-center p-1">
                  
                 
                   <div className="text-gray-600 mb-2 max-w-sm text-base space-y-2 tracking-wide">
@@ -1577,15 +1732,13 @@ export default function Home() {
                     >
                       {/* Avatar */}
                       {message.role === 'assistant' ? (
-                        <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                          <img 
-                            src="/beale_blue.png" 
-                            alt="Beale Avatar" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
+                        <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                          <Image
+                            src="/beale_blue.png"
+                            alt="Beale Avatar"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 40px, 48px"
                           />
                         </div>
                       ) : (
@@ -1642,29 +1795,26 @@ export default function Home() {
                                       </div>
                                     )}
                                     <div className="relative group">
-                                      <img
-                                        src={file.preview}
-                                        alt={file.name}
-                                        className={`rounded-lg object-cover border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer opacity-0 ${
-                                          expandedImage === file.preview 
-                                            ? 'w-48 h-48' 
-                                            : 'w-24 h-24'
-                                        }`}
-                                        onClick={() => file.preview && toggleImageExpansion(file.preview)}
-                                        onLoad={(e) => {
-                                          console.log('Image loaded successfully in conversation:', file.name);
-                                          // Hide loading overlay and show image
-                                          e.currentTarget.style.opacity = '1';
-                                          e.currentTarget.parentElement?.parentElement?.querySelector('.absolute')?.remove();
-                                        }}
-                                        onError={(e) => {
-                                          console.log('Image failed to load in conversation:', file.name, e);
-                                          // Hide loading overlay on error
-                                          e.currentTarget.parentElement?.parentElement?.querySelector('.absolute')?.remove();
-                                        }}
-                                      />
+                                      <div className={`relative rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 ${
+                                        expandedImage === file.preview
+                                          ? 'w-48 h-48'
+                                          : 'w-24 h-24'
+                                      }`}>
+                                        <Image
+                                          src={file.preview}
+                                          alt={file.name}
+                                          fill
+                                          className="object-cover rounded-lg"
+                                          sizes="(max-width: 768px) 96px, 192px"
+                                          onClick={() => file.preview && toggleImageExpansion(file.preview)}
+                                        />
+                                      </div>
                                       {/* Hover overlay with expand icon */}
-                                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                      <div className={`absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 ${
+                                        expandedImage === file.preview
+                                          ? 'w-48 h-48'
+                                          : 'w-24 h-24'
+                                      }`}>
                                         <div className="flex flex-col space-y-2">
                                           <div className="flex space-x-2">
                                             <button
@@ -1745,23 +1895,26 @@ export default function Home() {
                                       </div>
                                     </div>
                                   )}
-                                  <img
-                                    src={image.url}
-                                    alt={image.alt || 'AI generated image'}
-                                    className="w-24 h-24 rounded-lg object-cover border border-gray-200 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                                    onLoad={() => {
-                                      setImageLoadingStates(prev => ({
-                                        ...prev,
-                                        [image.url]: false
-                                      }));
-                                    }}
-                                    onError={() => {
-                                      setImageLoadingStates(prev => ({
-                                        ...prev,
-                                        [image.url]: false
-                                      }));
-                                    }}
-                                  />
+                                  <div className="relative w-24 h-24 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-shadow cursor-pointer overflow-hidden">
+                                    <Image
+                                      src={image.url}
+                                      alt={image.alt || 'AI generated image'}
+                                      fill
+                                      className="object-cover rounded-lg"
+                                      onLoad={() => {
+                                        setImageLoadingStates(prev => ({
+                                          ...prev,
+                                          [image.url]: false
+                                        }));
+                                      }}
+                                      onError={() => {
+                                        setImageLoadingStates(prev => ({
+                                          ...prev,
+                                          [image.url]: false
+                                        }));
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                                 {image.caption && (
                                   <div className="text-xs text-gray-600 italic text-center">
@@ -1838,31 +1991,29 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
-                  {isLoading && !conversationEnded && (
-                    <div className="flex flex-row items-start gap-2 mb-4 ml-1 mr-1">
-                      <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                        <img 
-                          src="/beale_blue.png" 
-                          alt="Beale Avatar" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                      <div className="bg-white text-gray-900 max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-lg rounded-bl-none border border-gray-200 animate-pulse-glow shadow-md">
-                        <div className="flex items-center space-x-3">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    {isLoading && !conversationEnded && (
+                      <div className="flex flex-row items-start gap-2 mb-4 ml-1 mr-1">
+                        <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                          <Image
+                            src="/beale_blue.png"
+                            alt="Beale Avatar"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 40px, 48px"
+                          />
+                        </div>
+                        <div className="bg-white text-gray-900 max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-lg rounded-bl-none border border-gray-200 animate-pulse-glow shadow-md">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
+                            <span className="text-sm font-medium tracking-wide">{getThinkingMessage()}</span>
                           </div>
-                          <span className="text-sm font-medium tracking-wide">{getThinkingMessage()}</span>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                   <div ref={messagesEndRef} />
                 </div>
               )}
@@ -1896,18 +2047,19 @@ export default function Home() {
                     {isSpeaking && (
                       <button
                         onClick={stopSpeaking}
-                        className="p-2 rounded-lg transition-colors bg-orange-100 text-orange-600 hover:bg-orange-200"
+                        className="p-2 rounded-lg transition-colors bg-red-100 text-red-600 hover:bg-red-200 border-2 border-red-300 font-medium"
                         title="Stop Beale from speaking"
                       >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M6 6h12v12H6z" />
                         </svg>
+                        <span className="text-xs">Stop</span>
                       </button>
                     )}
                     {/* Speech to Text Button */}
                     {isSupported && (
                       <button
-                        onClick={isListening ? stopListening : startListening}
+                        onClick={toggleListening}
                         disabled={isLoading}
                         className={`p-2 rounded-lg transition-colors ${
                           isListening
@@ -1928,11 +2080,22 @@ export default function Home() {
                       </button>
                     )}
                     {/* Emoji Button */}
-                    <button 
-                      onClick={toggleEmojiPicker}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (showEmojiPicker) {
+                          setShowEmojiPicker(false);
+                        } else {
+                          setShowEmojiPicker(true);
+                        }
+                      }}
                       disabled={isLoading && !isListening}
-                      className={`text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-colors ${(isLoading && !isListening) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={(isLoading && !isListening) ? tFallback('ui.bealeThinking') : 'Add emoji'}
+                      className={`p-2 rounded-lg transition-colors ${
+                        showEmojiPicker
+                          ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      } ${(isLoading && !isListening) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title={(isLoading && !isListening) ? tFallback('ui.bealeThinking') : (showEmojiPicker ? 'Close emoji picker' : 'Add emoji')}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <circle cx="12" cy="12" r="10"/>
@@ -2031,13 +2194,21 @@ export default function Home() {
               
               {/* Voice input status */}
               {isListening && (
-                <div className="mt-2 flex items-center space-x-2 text-sm text-red-600">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div className="mt-2 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 text-sm text-red-600">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                    <span className="font-medium">Listening... Speak now</span>
                   </div>
-                  <span>Listening... Speak now</span>
+                  <button
+                    onClick={toggleListening}
+                    className="px-3 py-1 bg-red-500 text-white text-xs rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    Stop
+                  </button>
                 </div>
               )}
               
@@ -2046,6 +2217,24 @@ export default function Home() {
                 <div className="mt-2 flex items-center space-x-2 text-sm text-green-600">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>{voiceCommand}</span>
+                </div>
+              )}
+              
+              {/* Speaking status with stop instructions */}
+              {isSpeaking && (
+                <div className="mt-2 flex items-center justify-between bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 text-sm text-orange-600">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                    <span className="font-medium">Beale is speaking...</span>
+                  </div>
+                  <button
+                    onClick={stopSpeaking}
+                    className="px-3 py-1 bg-orange-500 text-white text-xs rounded-full hover:bg-orange-600 transition-colors"
+                  >
+                    Stop Speaking
+                  </button>
                 </div>
               )}
               
@@ -2091,12 +2280,16 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <img
-              src={modalImageSrc}
-              alt="Full size image"
-              className="max-w-full max-h-full rounded-lg shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="relative w-full h-full max-w-full max-h-full rounded-lg shadow-2xl overflow-hidden">
+              <Image
+                src={modalImageSrc}
+                alt="Full size image"
+                fill
+                className="object-contain"
+                sizes="90vw"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
           </div>
         </div>
       )}
