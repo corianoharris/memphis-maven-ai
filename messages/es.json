@@ -32,7 +32,10 @@
     "relevantResources": "Recursos Relevantes",
     "relevance": "Relevancia",
     "clickToClose": "Haz clic para cerrar este menú",
-    "multilingualHelp": "Obtén ayuda en inglés, español o árabe"
+    "multilingualHelp": "Obtén ayuda en inglés, español o árabe",
+    "reportIssuesHelp": "Reporta problemas y obtén ayuda",
+    "findCityServices": "Encuentra servicios y recursos de la ciudad",
+    "clickToTryExample": "Haz clic para probar este ejemplo"
   },
   "greeting": "¡Hola Memphis! Soy Beale, directo de Beale Street. Estoy aquí para ayudarte con servicios de la ciudad, reportar problemas y responder preguntas en inglés, español o árabe. ¡Mantengamos Memphis suave y manejemos las cosas juntos!"
 }
