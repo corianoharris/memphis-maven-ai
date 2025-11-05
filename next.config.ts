@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   
   // Performance optimizations
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false, // Temporarily disabled to fix build
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
   },
   
