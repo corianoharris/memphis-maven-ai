@@ -157,6 +157,26 @@ export default function Home()
         'en': 'Get help in English, Spanish, or Arabic',
         'es': 'Obtén ayuda en inglés, español o árabe',
         'ar': 'احصل على مساعدة باللغة الإنجليزية أو الإسبانية أو العربية'
+      },
+      'ui.bealeSpeaking': {
+        'en': 'Beale is speaking...',
+        'es': 'Beale está hablando...',
+        'ar': 'Beale يتحدث...'
+      },
+      'ui.listening': {
+        'en': 'Listening... Speak now',
+        'es': 'Escuchando... Habla ahora',
+        'ar': 'يستمع... تكلم الآن'
+      },
+      'ui.stop': {
+        'en': 'Stop',
+        'es': 'Detener',
+        'ar': 'توقف'
+      },
+      'ui.stopSpeaking': {
+        'en': 'Stop Speaking',
+        'es': 'Detener habla',
+        'ar': 'توقف عن الكلام'
       }
     };
 
@@ -485,7 +505,8 @@ export default function Home()
   {
     const fetchQuickAccessData = async () =>
     {
-      setQuickAccessLoading(true);
+      {/* // false until there's a way to get current wait times. No an option currently */}
+      setQuickAccessLoading(false);
       try
       {
         const response = await fetch(`/api/quick-access?lang=${selectedLanguage}`);
@@ -1979,7 +2000,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-purple-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.communityServices')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
@@ -2002,7 +2023,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-blue-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.cityServices')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
@@ -2025,7 +2046,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-red-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.emergency')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
@@ -2621,7 +2642,7 @@ export default function Home()
                           <svg className="w-3 h-3 mr-1 inline" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 6h12v12H6z" />
                           </svg>
-                          Stop
+                          {tFallback('ui.stop')}
                         </button>
                       )}
                     </div>
@@ -2662,13 +2683,13 @@ export default function Home()
                           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                         </div>
-                        <span className="font-medium text-red-700">Listening... Speak now</span>
+                        <span className="font-medium text-red-700">{tFallback('ui.listening')}</span>
                       </div>
                       <button
                         onClick={toggleListening}
                         className="px-3 py-1 bg-red-500 text-white text-xs rounded-full hover:bg-red-600 transition-colors font-medium"
                       >
-                        Stop
+                        {tFallback('ui.stop')}
                       </button>
                     </div>
                   )}
@@ -2688,13 +2709,13 @@ export default function Home()
                         <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
                         </svg>
-                        <span className="font-medium text-orange-700">Beale is speaking...</span>
+                        <span className="font-medium text-orange-700">{tFallback('ui.bealeSpeaking')}</span>
                       </div>
                       <button
                         onClick={stopSpeaking}
                         className="px-3 py-1 bg-orange-500 text-white text-xs rounded-full hover:bg-orange-600 transition-colors font-medium"
                       >
-                        Stop Speaking
+                        {tFallback('ui.stopSpeaking')}
                       </button>
                     </div>
                   )}

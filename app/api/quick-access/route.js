@@ -17,7 +17,7 @@ async function scrapeQuickAccessInfo() {
         lastUpdated: new Date().toISOString()
       },
       '311': {
-        name: 'City Services', 
+        name: 'City Services',
         status: 'available',
         waitTime: 'Call for current wait time',
         phone: '901-636-6500',
@@ -43,10 +43,10 @@ async function scrapeQuickAccessInfo() {
     });
 
     const $311 = cheerio.load(memphis311Response.data);
-    
+
     // Look for current wait time information
     const waitTimeText = $311('body').text();
-    
+
     // Extract wait time information if available
     if (waitTimeText.includes('wait time') || waitTimeText.includes('hold time')) {
       // Try to extract specific wait time information
@@ -61,38 +61,39 @@ async function scrapeQuickAccessInfo() {
       quickAccessData.services['311'].status = 'busy';
     }
 
-    // If no wait time found in scraping, use intelligent fallback
+    // If no wait time found in scraping, show empathetic message
     if (quickAccessData.services['311'].waitTime === 'Call for current wait time') {
-      const currentHour = new Date().getHours();
-      const isBusinessHours = currentHour >= 8 && currentHour <= 17;
-      const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
-      
-      if (isPeakHours) {
-        quickAccessData.services['311'].waitTime = '5-10 minutes';
-        quickAccessData.services['311'].status = 'busy';
-      } else if (isBusinessHours) {
-        quickAccessData.services['311'].waitTime = '2-5 minutes';
-      } else {
-        quickAccessData.services['311'].waitTime = 'Immediate';
-      }
+      // Comment out intelligent fallback - will keep "Call for current wait time"
+      // const currentHour = new Date().getHours();
+      // const isBusinessHours = currentHour >= 8 && currentHour <= 17;
+      // const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
+      //
+      // if (isPeakHours) {
+      //   quickAccessData.services['311'].waitTime = '5-10 minutes';
+      //   quickAccessData.services['311'].status = 'busy';
+      // } else if (isBusinessHours) {
+      //   quickAccessData.services['311'].waitTime = '2-5 minutes';
+      // } else {
+      //   quickAccessData.services['311'].waitTime = 'Immediate';
+      // }
     }
 
   } catch (error) {
     console.log('Could not scrape 311 status:', error.message);
-    
-    // Try alternative approach - simulate realistic wait times based on time of day
-    const currentHour = new Date().getHours();
-    const isBusinessHours = currentHour >= 8 && currentHour <= 17;
-    const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
-    
-    if (isPeakHours) {
-      quickAccessData.services['311'].waitTime = '5-10 minutes';
-      quickAccessData.services['311'].status = 'busy';
-    } else if (isBusinessHours) {
-      quickAccessData.services['311'].waitTime = '2-5 minutes';
-    } else {
-      quickAccessData.services['311'].waitTime = 'Immediate';
-    }
+
+    // Comment out intelligent fallback - keep default "Call for current wait time"
+    // const currentHour = new Date().getHours();
+    // const isBusinessHours = currentHour >= 8 && currentHour <= 17;
+    // const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
+    //
+    // if (isPeakHours) {
+    //   quickAccessData.services['311'].waitTime = '5-10 minutes';
+    //   quickAccessData.services['311'].status = 'busy';
+    // } else if (isBusinessHours) {
+    //   quickAccessData.services['311'].waitTime = '2-5 minutes';
+    // } else {
+    //   quickAccessData.services['311'].waitTime = 'Immediate';
+    // }
   }
 
   try {
@@ -105,10 +106,10 @@ async function scrapeQuickAccessInfo() {
     });
 
     const $211 = cheerio.load(memphis211Response.data);
-    
+
     // Look for 211 service status
     const serviceText = $211('body').text();
-    
+
     // Check for service hours or status
     if (serviceText.includes('24/7') || serviceText.includes('24 hours')) {
       quickAccessData.services['211'].status = 'available';
@@ -118,32 +119,33 @@ async function scrapeQuickAccessInfo() {
       quickAccessData.services['211'].status = 'unavailable';
     }
 
-    // If no wait time found in scraping, use intelligent fallback
+    // If no wait time found in scraping, show empathetic message
     if (quickAccessData.services['211'].waitTime === 'Call for current wait time') {
-      const currentHour = new Date().getHours();
-      const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
-      
-      if (isPeakHours) {
-        quickAccessData.services['211'].waitTime = '3-7 minutes';
-        quickAccessData.services['211'].status = 'busy';
-      } else {
-        quickAccessData.services['211'].waitTime = '1-3 minutes';
-      }
+      // Comment out intelligent fallback - will keep "Call for current wait time"
+      // const currentHour = new Date().getHours();
+      // const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
+      //
+      // if (isPeakHours) {
+      //   quickAccessData.services['211'].waitTime = '3-7 minutes';
+      //   quickAccessData.services['211'].status = 'busy';
+      // } else {
+      //   quickAccessData.services['211'].waitTime = '1-3 minutes';
+      // }
     }
 
   } catch (error) {
     console.log('Could not scrape 211 status:', error.message);
-    
-    // 211 is typically 24/7, but simulate realistic wait times
-    const currentHour = new Date().getHours();
-    const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
-    
-    if (isPeakHours) {
-      quickAccessData.services['211'].waitTime = '3-7 minutes';
-      quickAccessData.services['211'].status = 'busy';
-    } else {
-      quickAccessData.services['211'].waitTime = '1-3 minutes';
-    }
+
+    // Comment out intelligent fallback - keep default "Call for current wait time"
+    // const currentHour = new Date().getHours();
+    // const isPeakHours = (currentHour >= 9 && currentHour <= 11) || (currentHour >= 14 && currentHour <= 16);
+    //
+    // if (isPeakHours) {
+    //   quickAccessData.services['211'].waitTime = '3-7 minutes';
+    //   quickAccessData.services['211'].status = 'busy';
+    // } else {
+    //   quickAccessData.services['211'].waitTime = '1-3 minutes';
+    // }
   }
 
   return quickAccessData;
@@ -159,35 +161,35 @@ function localizeWaitTimes(quickAccessInfo, language) {
   const waitTimeTranslations = {
     en: {
       '1-3 minutes': '1-3 minutes',
-      '2-5 minutes': '2-5 minutes', 
+      '2-5 minutes': '2-5 minutes',
       '3-7 minutes': '3-7 minutes',
       '5-10 minutes': '5-10 minutes',
       'Immediate': 'Immediate',
-      'Call for current wait time': 'Call for current wait time'
+      'Call for current wait time': 'Sorry, we\'re working to get current wait times as soon as possible'
     },
     es: {
       '1-3 minutes': '1-3 minutos',
       '2-5 minutes': '2-5 minutos',
-      '3-7 minutes': '3-7 minutos', 
+      '3-7 minutes': '3-7 minutos',
       '5-10 minutes': '5-10 minutos',
       'Immediate': 'Inmediato',
-      'Call for current wait time': 'Llama para tiempo de espera actual'
+      'Call for current wait time': 'Lo sentimos, estamos trabajando para obtener los tiempos de espera actuales lo antes posible'
     },
     ar: {
       '1-3 minutes': '1-3 دقائق',
       '2-5 minutes': '2-5 دقائق',
       '3-7 minutes': '3-7 دقائق',
-      '5-10 minutes': '5-10 دقائق', 
+      '5-10 minutes': '5-10 دقائق',
       'Immediate': 'فوري',
-      'Call for current wait time': 'اتصل لمعرفة وقت الانتظار الحالي'
+      'Call for current wait time': 'عذراً، نحن نعمل على الحصول على أوقات الانتظار الحالية في أقرب وقت ممكن'
     }
   };
 
   const translations = waitTimeTranslations[language] || waitTimeTranslations.en;
-  
+
   // Create a copy of the data to avoid mutating the original
   const localizedData = JSON.parse(JSON.stringify(quickAccessInfo));
-  
+
   // Translate wait times for each service
   Object.keys(localizedData.services).forEach(serviceKey => {
     const service = localizedData.services[serviceKey];
@@ -195,7 +197,7 @@ function localizeWaitTimes(quickAccessInfo, language) {
       service.waitTime = translations[service.waitTime];
     }
   });
-  
+
   return localizedData;
 }
 
@@ -207,12 +209,12 @@ export async function GET(request) {
   try {
     const url = new URL(request.url);
     const language = url.searchParams.get('lang') || 'en';
-    
+
     const quickAccessInfo = await scrapeQuickAccessInfo();
-    
+
     // Localize wait times based on language
     const localizedInfo = localizeWaitTimes(quickAccessInfo, language);
-    
+
     return NextResponse.json({
       success: true,
       data: localizedInfo,
@@ -221,7 +223,7 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('Quick Access API error:', error);
-    
+
     // Return fallback data if scraping fails
     return NextResponse.json({
       success: false,
@@ -235,7 +237,7 @@ export async function GET(request) {
           },
           '311': {
             name: 'City Services',
-            status: 'available', 
+            status: 'available',
             waitTime: 'Call for current wait time',
             phone: '901-636-6500'
           },
