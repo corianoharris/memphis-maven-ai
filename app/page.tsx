@@ -1,6 +1,11 @@
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
+/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
+/** biome-ignore-all lint/a11y/useButtonType: <explanation> */
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: <explanation> */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
@@ -106,11 +111,11 @@ export default function Home()
     // First try i18n if available and initialized
     if (i18n.isInitialized && t)
     {
-      try 
+      try
       {
         const result = t(key);
         if (result && result !== key) return result;
-      } catch (e) 
+      } catch (e)
       {
         console.log('i18n error for key:', key, e);
       }
@@ -125,7 +130,7 @@ export default function Home()
       },
       'ui.findCityServices': {
         'en': 'Find city services and resources',
-        'es': 'Encuentra servicios y recursos de la ciudad', 
+        'es': 'Encuentra servicios y recursos de la ciudad',
         'ar': 'البحث عن خدمات وموارد المدينة'
       },
       'ui.clickToTryExample': {
@@ -152,6 +157,26 @@ export default function Home()
         'en': 'Get help in English, Spanish, or Arabic',
         'es': 'Obtén ayuda en inglés, español o árabe',
         'ar': 'احصل على مساعدة باللغة الإنجليزية أو الإسبانية أو العربية'
+      },
+      'ui.bealeSpeaking': {
+        'en': 'Beale is speaking...',
+        'es': 'Beale está hablando...',
+        'ar': 'Beale يتحدث...'
+      },
+      'ui.listening': {
+        'en': 'Listening... Speak now',
+        'es': 'Escuchando... Habla ahora',
+        'ar': 'يستمع... تكلم الآن'
+      },
+      'ui.stop': {
+        'en': 'Stop',
+        'es': 'Detener',
+        'ar': 'توقف'
+      },
+      'ui.stopSpeaking': {
+        'en': 'Stop Speaking',
+        'es': 'Detener habla',
+        'ar': 'توقف عن الكلام'
       }
     };
 
@@ -423,7 +448,7 @@ export default function Home()
   {
     // Try different key patterns to find a match
     const patterns = [
-      // Pattern with triple underscores for " - " 
+      // Pattern with triple underscores for " - "
       title.replace(/\s*-\s*/g, '___'),
       // Pattern with single underscores
       title.replace(/[^a-zA-Z0-9]/g, '_'),
@@ -480,7 +505,8 @@ export default function Home()
   {
     const fetchQuickAccessData = async () =>
     {
-      setQuickAccessLoading(true);
+      {/* // false until there's a way to get current wait times. No an option currently */}
+      setQuickAccessLoading(false);
       try
       {
         const response = await fetch(`/api/quick-access?lang=${selectedLanguage}`);
@@ -737,7 +763,7 @@ export default function Home()
         recognitionRef.current = recognition;
       }
     }
-  }, [selectedLanguage]); // Re-initialize when language changes
+  }, [selectedLanguage, isVoiceMode]); // Re-initialize when language changes or dependencies change
 
   const sendMessage = async (messageText?: string, fromVoice: boolean = false) =>
   {
@@ -1450,12 +1476,12 @@ export default function Home()
     }
   };
 
-  const triggerFileInput = () =>
+  const triggerFileInput = useCallback(() =>
   {
     if (isLoading) return; // Don't open file input when loading
     console.log('Triggering file input, ref:', fileInputRef.current);
     fileInputRef.current?.click();
-  };
+  }, [isLoading]);
 
   // Image expansion and modal functions
   const toggleImageExpansion = (imageSrc: string) =>
@@ -1629,6 +1655,7 @@ export default function Home()
             {/* Action Area */}
             <div className="p-8 text-center bg-transparent relative z-10">
               <button
+                type="button"
                 onClick={() => setShowChat(true)}
                 className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 active:scale-95"
                 title="Start chatting with Beale, your Memphis AI assistant"
@@ -1638,7 +1665,8 @@ export default function Home()
 
                 {/* Button Content */}
                 <div className="relative flex items-center space-x-2">
-                  <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Start chatting">
+                    <title>Start chatting</title>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span>Start Chatting</span>
@@ -1668,14 +1696,14 @@ export default function Home()
             {/* <div className="px-6 py-2 bg-transparent border-b border-gray-300 h-36">
               <div className="flex items-center justify-center p-1">
                 <div className="flex flex-col items-center justify-center p-1 w-42 h-42">
-                  <div 
+                  <div
                     className="w-full h-full rounded-lg p-1 bg-transparent overflow-visible cursor-help relative group"
                     title="Beale - Help and harmony straight from Beale"
                     onMouseEnter={() => console.log('Hovering over avatar')}
                   >
-                    <img 
-                      src="/Beale_blue.png" 
-                      alt="Beale Avatar" 
+                    <img
+                      src="/Beale_blue.png"
+                      alt="Beale Avatar"
                       className="w-full h-full object-cover rounded-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -1738,6 +1766,7 @@ export default function Home()
                   {/* Language Selector */}
                   <div className="relative group z-[99999]">
                     <button
+                      type="button"
                       data-language-toggle
                       onClick={() =>
                       {
@@ -1758,7 +1787,8 @@ export default function Home()
                           : 'text-white hover:text-white hover:bg-white/10'
                         }`}
                     >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-label="Language selector">
+                        <title>Language selector</title>
                         <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" />
                       </svg>
                       <span className="text-xs font-semibold">
@@ -1838,7 +1868,8 @@ export default function Home()
                       : 'text-white hover:text-white hover:bg-white/10'
                       }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Clear conversation">
+                      <title>Clear conversation</title>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
@@ -1863,7 +1894,8 @@ export default function Home()
                         : 'text-white hover:text-white hover:bg-white/10'
                         }`}
                     >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-label="Settings menu">
+                        <title>Settings menu</title>
                         <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                       </svg>
                     </button>
@@ -1908,7 +1940,8 @@ export default function Home()
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-lg flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Lightning bolt">
+                        <title>Lightning bolt</title>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     </div>
@@ -1919,7 +1952,8 @@ export default function Home()
                     className="p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 text-gray-600 hover:text-gray-800 hover:bg-white/50"
                     title={quickAccessCollapsed ? "Expand quick access cards" : "Collapse quick access cards"}
                   >
-                    <svg className="w-4 h-4 transition-transform duration-300" style={{ transform: quickAccessCollapsed ? 'rotate(0deg)' : 'rotate(180deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 transition-transform duration-300" style={{ transform: quickAccessCollapsed ? 'rotate(0deg)' : 'rotate(180deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Expand/collapse">
+                      <title>Expand/collapse</title>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -1958,6 +1992,7 @@ export default function Home()
                             <div className="flex flex-col items-center flex-shrink-0">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-purple-600 flex items-center justify-center">
                                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <title>Phone</title>
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                               </div>
@@ -1965,7 +2000,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-purple-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.communityServices')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['211']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['211']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['211']?.waitTime || tFallback('ui.callForWaitTime')}
@@ -1980,6 +2015,7 @@ export default function Home()
                             <div className="flex flex-col items-center flex-shrink-0">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-blue-600 flex items-center justify-center">
                                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <title>City Services</title>
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
                               </div>
@@ -1987,7 +2023,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-blue-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.cityServices')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['311']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['311']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['311']?.waitTime || tFallback('ui.callForWaitTime')}
@@ -2002,6 +2038,7 @@ export default function Home()
                             <div className="flex flex-col items-center flex-shrink-0">
                               <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-red-600 flex items-center justify-center">
                                 <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <title>Emergency Services</title>
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                               </div>
@@ -2009,7 +2046,7 @@ export default function Home()
                             </div>
                             <div className="flex-1 min-w-0 border border-red-200 rounded-lg px-3 py-3 hover:shadow-lg transition-shadow">
                               <div className="text-sm font-semibold tracking-wide">{tFallback('ui.emergency')}</div>
-                              <div className="text-xs opacity-70 tracking-wide">
+                              <div className="text-xs opacity-70 tracking-wide hidden">
                                 {quickAccessData?.services?.['911']?.waitTime === 'Call for current wait time' ? tFallback('ui.callForWaitTime') :
                                   quickAccessData?.services?.['911']?.waitTime === 'Immediate' ? tFallback('ui.immediate') :
                                     quickAccessData?.services?.['911']?.waitTime || tFallback('ui.immediate')}
@@ -2041,7 +2078,7 @@ export default function Home()
                       sizes="48px"
                     />
                   </div>
-                  
+
                   <div>
                     <h2 className="text-gray-900 font-bold text-xl tracking-wide">Beale</h2>
                   </div>
@@ -2171,7 +2208,7 @@ export default function Home()
                           {message.attachedFiles && message.attachedFiles.length > 0 && (
                             <div className="mt-3 space-y-3">
                               {message.attachedFiles.map((file, index) => (
-                                <div key={index} className="space-y-2">
+                                <div key={`${message.id}-attached-${file.name}-${index}`} className="space-y-2">
                                   {/* Image preview for image files */}
                                   {file.type.startsWith('image/') && file.preview && (
                                     <div
@@ -2272,7 +2309,7 @@ export default function Home()
                           {message.images && message.images.length > 0 && (
                             <div className="mt-3 grid grid-cols-2 gap-3">
                               {message.images.map((image, index) => (
-                                <div key={index} className="relative group cursor-pointer">
+                                <div key={`${message.id}-image-${image.url}-${index}`} className="relative group cursor-pointer">
                                   <div className="w-full h-32 rounded-xl overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-shadow">
                                     <OptimizedImage
                                       src={image.url}
@@ -2340,7 +2377,7 @@ export default function Home()
 
                               <div className="space-y-2">
                                 {(expandedResources[message.id] ? message.relevantPages : message.relevantPages.slice(0, 3)).map((page, index) => (
-                                  <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:bg-gray-100 transition-colors">
+                                  <div key={`${message.id}-page-${page.url}-${index}`} className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:bg-gray-100 transition-colors">
                                     <a
                                       href={page.url}
                                       target="_blank"
@@ -2442,14 +2479,15 @@ export default function Home()
                 {attachedFiles.length > 0 && (
                   <div className="mb-4 space-y-3">
                     <div className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Attached files">
+                        <title>Attached files</title>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                       </svg>
                       <span>Attached Files ({attachedFiles.length})</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {attachedFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-200">
+                        <div key={`attached-${file.name}-${index}`} className="flex items-center justify-between bg-gray-50 rounded-xl p-3 border border-gray-200">
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                               {file.type.startsWith('image/') ? (
@@ -2604,7 +2642,7 @@ export default function Home()
                           <svg className="w-3 h-3 mr-1 inline" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 6h12v12H6z" />
                           </svg>
-                          Stop
+                          {tFallback('ui.stop')}
                         </button>
                       )}
                     </div>
@@ -2645,13 +2683,13 @@ export default function Home()
                           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                         </div>
-                        <span className="font-medium text-red-700">Listening... Speak now</span>
+                        <span className="font-medium text-red-700">{tFallback('ui.listening')}</span>
                       </div>
                       <button
                         onClick={toggleListening}
                         className="px-3 py-1 bg-red-500 text-white text-xs rounded-full hover:bg-red-600 transition-colors font-medium"
                       >
-                        Stop
+                        {tFallback('ui.stop')}
                       </button>
                     </div>
                   )}
@@ -2671,13 +2709,13 @@ export default function Home()
                         <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
                         </svg>
-                        <span className="font-medium text-orange-700">Beale is speaking...</span>
+                        <span className="font-medium text-orange-700">{tFallback('ui.bealeSpeaking')}</span>
                       </div>
                       <button
                         onClick={stopSpeaking}
                         className="px-3 py-1 bg-orange-500 text-white text-xs rounded-full hover:bg-orange-600 transition-colors font-medium"
                       >
-                        Stop Speaking
+                        {tFallback('ui.stopSpeaking')}
                       </button>
                     </div>
                   )}
@@ -2790,5 +2828,3 @@ export default function Home()
     </div>
   );
 }
-
-

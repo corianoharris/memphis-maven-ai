@@ -28,11 +28,11 @@ The Memphis 211/311 AI chatbot has been successfully enhanced with improved pers
 - **Contextual Emojis**: Appropriate emoji usage based on conversation context
 
 **Enhanced Response Patterns:**
-- **Greeting**: "Hey there! 😊", "Hi! How can I brighten your day?"
-- **Urgent**: "Let's handle this right away! 🚀", "No time to waste!"
-- **Technical**: "Great question! 🧠 Now this is my specialty!"
-- **Celebration**: "Yes! 🎉 That's exactly right!", "Perfect! You're crushing this! 💪"
-- **Playful**: "Ooh, challenge accepted! 😎", "Let's solve this puzzle together! 🧩"
+- **Greeting**: "Hey there!", "Hi! How can I brighten your day?"
+- **Urgent**: "Let's handle this right away!", "No time to waste!"
+- **Technical**: "Great question! Now this is my specialty!"
+- **Celebration**: "Yes! 🎉 That's exactly right!", "Perfect! You're crushing this!"
+- **Playful**: "Ooh, challenge accepted!", "Let's solve this puzzle together! 🧩"
 
 **File Enhanced:** `lib/ai.js`
 
