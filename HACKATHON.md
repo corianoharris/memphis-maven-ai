@@ -45,7 +45,7 @@ Beale is a conversational AI assistant that:
 | **Get Permit Information** | 15-20 min (find form, read requirements, call for clarification) | 1 minute | **95% faster** |
 | **Emergency Services Info** | 5-10 min (call 311 to get transferred) | Instant | **100% faster** |
 
-**Average Time Saved**: **8 minutes per interaction**  
+**Average Time Saved**: **8 minutes per interaction**
 **Annual Impact** (10,000 users × 2 interactions/month): **26,667 hours saved**
 
 ### For City Service Representatives
@@ -100,30 +100,30 @@ Beale is a conversational AI assistant that:
 ## 🎯 Use Cases & Impact
 
 ### Use Case 1: Reporting Potholes
-**Before**: Call 311 → Wait 3 minutes → Explain location → Get confirmation → Hang up  
+**Before**: Call 311 → Wait 3 minutes → Explain location → Get confirmation → Hang up
 **With Beale**: "Report a pothole on Main Street" → Get link to report → Submit in 30 seconds
 
-**Time Saved**: **2 minutes, 48 seconds**  
+**Time Saved**: **2 minutes, 48 seconds**
 **Annual Impact**: 5,000 pothole reports = **233 hours saved**
 
 ### Use Case 2: Emergency Services
-**Before**: Uncertain if situation is 911-worthy → Call 311 first → Get redirected  
+**Before**: Uncertain if situation is 911-worthy → Call 311 first → Get redirected
 **With Beale**: "Is this an emergency?" → Instant guidance → Know when to call 911
 
 **Impact**: **Reduces 911 non-emergency calls by 40%**
 
 ### Use Case 3: Community Resources
-**Before**: Google search → Browse multiple websites → Call to verify  
+**Before**: Google search → Browse multiple websites → Call to verify
 **With Beale**: "I need help with food assistance" → Instant directory with contact info
 
-**Time Saved**: **10-15 minutes**  
+**Time Saved**: **10-15 minutes**
 **Annual Impact**: 20,000 resource lookups = **5,000 hours saved**
 
 ### Use Case 4: Permit Questions
-**Before**: Find application → Read requirements → Call department → Wait for callback  
+**Before**: Find application → Read requirements → Call department → Wait for callback
 **With Beale**: "What do I need for a building permit?" → Instant requirements list
 
-**Time Saved**: **15-20 minutes**  
+**Time Saved**: **15-20 minutes**
 **Annual Impact**: 3,000 permit questions = **1,000 hours saved**
 
 ---
@@ -223,16 +223,16 @@ Beale serves as a learning tool for residents:
 
 **Beale** transforms how Memphis residents interact with city services, saving thousands of hours annually while dramatically improving accessibility and satisfaction.
 
-**For Residents**:  
-✅ Instant answers, 24/7  
-✅ Multiple languages  
-✅ No waiting on hold  
+**For Residents**:
+✅ Instant answers, 24/7
+✅ Multiple languages
+✅ No waiting on hold
 ✅ Voice and text support
 
-**For City**:  
-✅ 70-80% call volume reduction  
-✅ $375,000 annual savings  
-✅ Improved satisfaction scores  
+**For City**:
+✅ 70-80% call volume reduction
+✅ $375,000 annual savings
+✅ Improved satisfaction scores
 ✅ Better resource utilization
 
 **Beale isn't just a chatbot—it's a bridge between Memphis residents and their city services.**
