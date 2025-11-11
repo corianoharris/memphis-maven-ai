@@ -186,10 +186,11 @@ Beale is a conversational AI assistant that:
 
 ### Architecture
 - **Frontend**: Next.js (React)
-- **Backend**: Node.js API routes
+- **HTTP requests**: API routes ( Axios )
 - **AI**: Ollama (local LLM) for privacy and speed
-- **Database**: PostgreSQL with vector search
-- **Deployment**: Railway (serverless, auto-scaling)
+- **Docker**: Containerize Ollama
+- **Database**: ( Neon ) PostgreSQL
+- **Deployment**: Railway (serverless, auto-scaling) Ollama
 
 ### Key Technologies
 - **Semantic Search**: Vector embeddings for intelligent matching

@@ -30,7 +30,7 @@ const BASE_URLS = [
 // Function to discover additional URLs from a page
 async function discoverUrls(baseUrl, maxDepth = 2, currentDepth = 0) {
   if (currentDepth >= maxDepth) return [];
-  
+
   try {
     const response = await axios.get(baseUrl, {
       timeout: 10000,
@@ -38,18 +38,18 @@ async function discoverUrls(baseUrl, maxDepth = 2, currentDepth = 0) {
         'User-Agent': 'Mozilla/5.0 (compatible; Memphis-211-311-Bot/1.0)'
       }
     });
-    
+
     const $ = cheerio.load(response.data);
     const discoveredUrls = [];
-    
+
     $('a[href]').each((i, el) => {
       const href = $(el).attr('href');
       if (href && href.startsWith('http') && href.includes('memphistn.gov')) {
         // Filter out irrelevant pages
-        if (!href.includes('#') && 
-            !href.includes('.pdf') && 
-            !href.includes('.doc') && 
-            !href.includes('.jpg') && 
+        if (!href.includes('#') &&
+            !href.includes('.pdf') &&
+            !href.includes('.doc') &&
+            !href.includes('.jpg') &&
             !href.includes('.png') &&
             !href.includes('mailto:') &&
             !href.includes('tel:')) {
@@ -57,11 +57,11 @@ async function discoverUrls(baseUrl, maxDepth = 2, currentDepth = 0) {
         }
       } else if (href && href.startsWith('/')) {
         const fullUrl = new URL(href, baseUrl).href;
-        if (fullUrl.includes('memphistn.gov') && 
-            !fullUrl.includes('#') && 
-            !fullUrl.includes('.pdf') && 
-            !fullUrl.includes('.doc') && 
-            !fullUrl.includes('.jpg') && 
+        if (fullUrl.includes('memphistn.gov') &&
+            !fullUrl.includes('#') &&
+            !fullUrl.includes('.pdf') &&
+            !fullUrl.includes('.doc') &&
+            !fullUrl.includes('.jpg') &&
             !fullUrl.includes('.png') &&
             !fullUrl.includes('mailto:') &&
             !fullUrl.includes('tel:')) {
@@ -69,7 +69,7 @@ async function discoverUrls(baseUrl, maxDepth = 2, currentDepth = 0) {
         }
       }
     });
-    
+
     return [...new Set(discoveredUrls)]; // Remove duplicates
   } catch (error) {
     console.log(`Error discovering URLs from ${baseUrl}:`, error.message);
@@ -97,14 +97,14 @@ function cleanText(text) {
  */
 function extractContent(html) {
   const $ = cheerio.load(html);
-  
+
   // Remove script and style elements
   $('script, style, nav, footer, header').remove();
-  
+
   // Extract title
   let title = $('title').text() || $('h1').first().text() || 'Untitled';
   title = cleanText(title);
-  
+
   // Extract main content
   const contentSelectors = [
     'main',
@@ -114,7 +114,7 @@ function extractContent(html) {
     '#content',
     'body'
   ];
-  
+
   let content = '';
   for (const selector of contentSelectors) {
     const element = $(selector);
@@ -123,14 +123,14 @@ function extractContent(html) {
       break;
     }
   }
-  
+
   // If no main content found, get all text
   if (!content) {
     content = $('body').text();
   }
-  
+
   content = cleanText(content);
-  
+
   // Extract links for additional context
   const links = [];
   $('a[href]').each((i, el) => {
@@ -140,7 +140,7 @@ function extractContent(html) {
       links.push({ url: href, text: text });
     }
   });
-  
+
   return {
     title,
     content,
@@ -156,21 +156,21 @@ function extractContent(html) {
 async function scrapeUrl(url) {
   try {
     console.log(`Scraping: ${url}`);
-    
+
     const response = await axios.get(url, {
       timeout: 30000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Memphis-211-311-Bot/1.0)'
       }
     });
-    
+
     const { title, content, links } = extractContent(response.data);
-    
+
     if (!content || content.length < 100) {
       console.log(`Skipping ${url}: insufficient content`);
       return null;
     }
-    
+
     return {
       url,
       title,
@@ -178,7 +178,7 @@ async function scrapeUrl(url) {
       links,
       scrapedAt: new Date()
     };
-    
+
   } catch (error) {
     console.error(`Error scraping ${url}:`, error.message);
     return null;
@@ -192,29 +192,29 @@ async function scrapeUrl(url) {
 async function processPage(pageData) {
   try {
     const { url, title, content } = pageData;
-    
+
     // Check if page already exists and is recent
     const existingPage = await db.getPageByUrl(url);
     if (existingPage) {
       const lastUpdated = new Date(existingPage.last_updated);
       const now = new Date();
       const hoursSinceUpdate = (now - lastUpdated) / (1000 * 60 * 60);
-      
+
       // Skip if updated within last 24 hours
       if (hoursSinceUpdate < 24) {
         console.log(`Skipping ${url}: recently updated`);
         return;
       }
     }
-    
+
     // Generate embedding for semantic search
     console.log(`Generating embedding for: ${title}`);
     const embedding = await getEmbedding(content);
-    
+
     // Store in database
     await db.insertPage(url, title, content, embedding);
     console.log(`Stored: ${title}`);
-    
+
   } catch (error) {
     console.error(`Error processing page ${pageData.url}:`, error.message);
   }
@@ -226,10 +226,10 @@ async function processPage(pageData) {
 async function scrapeAllPages() {
   try {
     console.log('Starting web scraping...');
-    
+
     // Initialize database
     await initializeDatabase();
-    
+
     // Scrape main target URLs
     for (const url of TARGET_URLS) {
       const pageData = await scrapeUrl(url);
@@ -237,35 +237,35 @@ async function scrapeAllPages() {
         await processPage(pageData);
       }
     }
-    
+
     // Discover and scrape additional URLs dynamically
     const allUrls = new Set();
-    
+
     // Start with base URLs and discover more
     for (const baseUrl of BASE_URLS) {
       console.log(`Discovering URLs from: ${baseUrl}`);
       const discoveredUrls = await discoverUrls(baseUrl, 2);
-      discoveredUrls.forEach(url => allUrls.add(url));
-      
+      discoveredUrls.map(url => allUrls.add(url));
+
       // Add delay to be respectful
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
+
     console.log(`Found ${allUrls.size} URLs to scrape`);
-    
+
     // Scrape all discovered URLs
     for (const url of Array.from(allUrls)) {
       const pageData = await scrapeUrl(url);
       if (pageData) {
         await processPage(pageData);
       }
-      
+
       // Add delay to be respectful
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    
+
     console.log('Web scraping completed successfully');
-    
+
   } catch (error) {
     console.error('Scraping error:', error);
   }
@@ -277,9 +277,9 @@ async function scrapeAllPages() {
 async function updateEmbeddings() {
   try {
     console.log('Updating embeddings...');
-    
+
     const pages = await db.getAllPages();
-    
+
     for (const page of pages) {
       try {
         console.log(`Updating embedding for: ${page.title}`);
@@ -289,9 +289,9 @@ async function updateEmbeddings() {
         console.error(`Error updating embedding for ${page.url}:`, error.message);
       }
     }
-    
+
     console.log('Embeddings updated successfully');
-    
+
   } catch (error) {
     console.error('Embedding update error:', error);
   }
@@ -300,7 +300,7 @@ async function updateEmbeddings() {
 // Main execution
 if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
-  
+
   if (command === 'update-embeddings') {
     updateEmbeddings().then(() => process.exit(0));
   } else {
